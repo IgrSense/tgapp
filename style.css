@@ -1,83 +1,165 @@
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
-    padding: 16px;
-    color: var(--tg-theme-text-color);
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: var(--tg-theme-bg-color);
+    color: var(--tg-theme-text-color);
 }
 
-.container {
-    max-width: 720px;
-    margin: 0 auto;
+.app {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
-.header {
+header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-}
-
-.cart-info {
-    background: var(--tg-theme-button-color);
-    padding: 8px 16px;
-    border-radius: 8px;
-    color: var(--tg-theme-button-text-color);
-}
-
-.products {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 16px;
-    margin-bottom: 20px;
-}
-
-.product-card {
-    background: var(--tg-theme-secondary-bg-color);
-    border-radius: 8px;
-    padding: 12px;
-    text-align: center;
-}
-
-.product-image {
-    width: 100%;
-    height: 120px;
-    object-fit: cover;
-    border-radius: 4px;
-    margin-bottom: 8px;
-}
-
-.product-title {
-    font-size: 14px;
-    margin-bottom: 8px;
-}
-
-.product-price {
-    font-weight: bold;
-    margin-bottom: 8px;
-}
-
-.add-to-cart {
-    background: var(--tg-theme-button-color);
-    border: none;
-    color: var(--tg-theme-button-text-color);
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-}
-
-.cart-total {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--tg-theme-secondary-bg-color);
     padding: 16px;
+    background: var(--tg-theme-bg-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.menu-btn, .search-btn {
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.dashboard {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 16px;
+}
+
+.active-car {
+    margin: 24px 0;
+}
+
+.car-card {
+    background: var(--tg-theme-secondary-bg-color);
+    border-radius: 16px;
+    padding: 16px;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    animation: slideIn 0.3s ease-out;
+}
+
+.car-image {
+    width: 200px;
+    height: auto;
+    object-fit: contain;
+    margin-right: 16px;
+}
+
+.stats-card {
+    background: #7B61FF;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    color: white;
+    margin-top: 12px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.stat {
     text-align: center;
 }
 
-.total {
-    font-size: 18px;
-    font-weight: bold;
+.stat h3 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.stat p {
+    margin: 4px 0 0;
+    opacity: 0.8;
+}
+
+.location-info {
+    margin: 24px 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.user-card {
+    background: var(--tg-theme-secondary-bg-color);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    margin-right: 12px;
+}
+
+.mini-map {
+    height: 200px;
+    background: var(--tg-theme-secondary-bg-color);
+    border-radius: 16px;
+}
+
+.map-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: none;
+}
+
+.bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    padding: 16px;
+    background: var(--tg-theme-bg-color);
+    border-top: 1px solid var(--tg-theme-secondary-bg-color);
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    color: var(--tg-theme-text-color);
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.nav-btn.active {
+    opacity: 1;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.icon {
+    font-size: 24px;
 } 

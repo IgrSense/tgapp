@@ -1,85 +1,113 @@
 let tg = window.Telegram.WebApp;
 tg.expand();
 
-// Данные о товарах
-const products = [
-    {
-        id: 1,
-        title: "Товар 1",
-        price: 1000,
-        image: "https://via.placeholder.com/150"
-    },
-    {
-        id: 2,
-        title: "Товар 2",
-        price: 2000,
-        image: "https://via.placeholder.com/150"
-    },
-    {
-        id: 3,
-        title: "Товар 3",
-        price: 3000,
-        image: "https://via.placeholder.com/150"
+// Инициализация Mapbox
+mapboxgl.accessToken = 'YOUR_MAPBOX_TOKEN'; // Получите токен на mapbox.com
+
+// Текущие координаты
+let currentLocation = {
+    lat: null,
+    lng: null
+};
+
+// Инициализация карты
+const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/dark-v10',
+    center: [37.6156, 55.7522], // Москва по умолчанию
+    zoom: 12
+});
+
+// Мини-карта
+const miniMap = new mapboxgl.Map({
+    container: 'mini-map',
+    style: 'mapbox://styles/mapbox/dark-v10',
+    center: [37.6156, 55.7522],
+    zoom: 12,
+    interactive: false
+});
+
+// Маркер машины
+let carMarker = null;
+
+// Получение текущей геолокации
+function getCurrentLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+            currentLocation.lat = position.coords.latitude;
+            currentLocation.lng = position.coords.longitude;
+            
+            // Обновляем карты
+            map.setCenter([currentLocation.lng, currentLocation.lat]);
+            miniMap.setCenter([currentLocation.lng, currentLocation.lat]);
+            
+            // Добавляем маркер
+            if (carMarker) carMarker.remove();
+            carMarker = new mapboxgl.Marker()
+                .setLngLat([currentLocation.lng, currentLocation.lat])
+                .addTo(map);
+            
+            new mapboxgl.Marker()
+                .setLngLat([currentLocation.lng, currentLocation.lat])
+                .addTo(miniMap);
+        });
     }
-];
+}
 
-// Корзина
-let cart = [];
+// Сохранение локации машины
+function saveCarLocation() {
+    if (currentLocation.lat && currentLocation.lng) {
+        const data = {
+            type: 'car_location',
+            location: currentLocation
+        };
+        tg.sendData(JSON.stringify(data));
+        tg.showAlert('Локация машины сохранена!');
+    }
+}
 
-// Отображение товаров
-function renderProducts() {
-    const container = document.getElementById('productsContainer');
-    container.innerHTML = '';
-
-    products.forEach(product => {
-        const productElement = document.createElement('div');
-        productElement.className = 'product-card';
-        productElement.innerHTML = `
-            <img src="${product.image}" alt="${product.title}" class="product-image">
-            <div class="product-title">${product.title}</div>
-            <div class="product-price">${product.price} ₽</div>
-            <button onclick="addToCart(${product.id})" class="add-to-cart">В корзину</button>
-        `;
-        container.appendChild(productElement);
+// Анимация для элементов
+function animateElements() {
+    const elements = document.querySelectorAll('.car-card, .stats-card, .user-card');
+    elements.forEach((el, index) => {
+        el.style.animationDelay = `${index * 0.1}s`;
     });
 }
 
-// Добавление в корзину
-function addToCart(productId) {
-    const product = products.find(p => p.id === productId);
-    if (product) {
-        cart.push(product);
-        updateCartInfo();
-        tg.MainButton.setText(`Оформить заказ (${calculateTotal()} ₽)`);
-        tg.MainButton.show();
-    }
-}
-
-// Обновление информации о корзине
-function updateCartInfo() {
-    document.getElementById('cartCount').textContent = cart.length;
-    document.getElementById('totalPrice').textContent = calculateTotal();
-}
-
-// Подсчет общей суммы
-function calculateTotal() {
-    return cart.reduce((sum, product) => sum + product.price, 0);
-}
-
-// Отправка данных в бот
-tg.MainButton.onClick(() => {
-    const data = {
-        products: cart,
-        totalPrice: calculateTotal()
-    };
-    tg.sendData(JSON.stringify(data));
+// Переключение между видами
+document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        if (btn.dataset.tab === 'dashboard') {
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('map').style.display = 'none';
+        } else if (btn.dataset.tab === 'map') {
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('map').style.display = 'block';
+            map.resize();
+        }
+    });
 });
 
 // Инициализация
-renderProducts();
+document.addEventListener('DOMContentLoaded', () => {
+    getCurrentLocation();
+    animateElements();
+    
+    // Добавляем кнопку на MainButton
+    tg.MainButton.setText('Сохранить локацию');
+    tg.MainButton.onClick(saveCarLocation);
+    tg.MainButton.show();
+});
 
-// Устанавливаем тему
-document.documentElement.style.setProperty('--tg-theme-bg-color', tg.backgroundColor);
-document.documentElement.style.setProperty('--tg-theme-text-color', tg.textColor);
-document.documentElement.style.setProperty('--tg-theme-button-color', tg.buttonColor);
-document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.buttonTextColor); 
+// Обновление темы
+function updateTheme() {
+    document.documentElement.style.setProperty('--tg-theme-bg-color', tg.backgroundColor);
+    document.documentElement.style.setProperty('--tg-theme-text-color', tg.textColor);
+    document.documentElement.style.setProperty('--tg-theme-button-color', tg.buttonColor);
+    document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.buttonTextColor);
+}
+
+updateTheme(); 

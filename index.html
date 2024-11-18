@@ -3,26 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Магазин</title>
+    <title>CarFinder</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Наш магазин</h1>
-            <div class="cart-info">
-                Корзина: <span id="cartCount">0</span> товаров
+    <div class="app">
+        <div class="dashboard active" id="dashboard">
+            <header>
+                <div class="menu-btn">☰</div>
+                <h1>Dashboard</h1>
+                <div class="search-btn">🔍</div>
+            </header>
+
+            <div class="active-car">
+                <h2>Active car</h2>
+                <div class="car-card">
+                    <img src="https://example.com/car-image.png" alt="Your car" class="car-image">
+                    <div class="car-info">
+                        <h3>Fortuner GR</h3>
+                        <p>$45.00/h</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats">
+                <h2>Today</h2>
+                <div class="stats-card">
+                    <div class="stat">
+                        <h3>57km</h3>
+                        <p>Distance</p>
+                    </div>
+                    <div class="stat">
+                        <h3>43min</h3>
+                        <p>Drive time</p>
+                    </div>
+                    <div class="stat">
+                        <h3>$324</h3>
+                        <p>Money</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="location-info">
+                <div class="user-card">
+                    <img src="https://example.com/user-avatar.png" alt="User" class="user-avatar">
+                    <h3>Jane Cooper</h3>
+                </div>
+                <div id="mini-map" class="mini-map"></div>
             </div>
         </div>
 
-        <div class="products" id="productsContainer">
-            <!-- Товары будут добавлены через JavaScript -->
-        </div>
+        <div class="map-view" id="map"></div>
 
-        <div class="cart-total">
-            <div class="total">Итого: <span id="totalPrice">0</span> ₽</div>
-        </div>
+        <nav class="bottom-nav">
+            <button class="nav-btn active" data-tab="dashboard">
+                <span class="icon">🏠</span>
+            </button>
+            <button class="nav-btn" data-tab="messages">
+                <span class="icon">💬</span>
+            </button>
+            <button class="nav-btn" data-tab="favorites">
+                <span class="icon">❤️</span>
+            </button>
+            <button class="nav-btn" data-tab="profile">
+                <span class="icon">👤</span>
+            </button>
+        </nav>
     </div>
     <script src="app.js"></script>
 </body>
