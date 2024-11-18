@@ -95,6 +95,58 @@
             <button class="back-btn" id="backToMain">←</button>
         </div>
 
+        <div class="page history-page" id="historyPage">
+            <header class="animate__animated animate__fadeInDown">
+                <div class="back-btn" onclick="showDashboard()">←</div>
+                <h1>История парковок</h1>
+            </header>
+            
+            <div class="history-list">
+                <!-- История будет добавлена через JavaScript -->
+            </div>
+        </div>
+
+        <div class="page profile-page" id="profilePage">
+            <header class="animate__animated animate__fadeInDown">
+                <div class="back-btn" onclick="showDashboard()">←</div>
+                <h1>Профиль</h1>
+            </header>
+            
+            <div class="profile-content">
+                <div class="profile-header">
+                    <div class="user-avatar-container large">
+                        <img id="profileAvatar" src="default-avatar.png" alt="Profile" class="user-avatar large">
+                        <button class="change-avatar-btn" onclick="uploadUserAvatar('profileAvatar')">
+                            <span class="icon">📷</span>
+                        </button>
+                    </div>
+                    <input type="text" id="profileName" class="profile-name-input" value="User Name" placeholder="Ваше имя">
+                </div>
+                
+                <div class="profile-stats">
+                    <div class="profile-stat">
+                        <h3>Всего поездок</h3>
+                        <p id="totalTrips">42</p>
+                    </div>
+                    <div class="profile-stat">
+                        <h3>Общее расстояние</h3>
+                        <p id="totalDistance">1250 км</p>
+                    </div>
+                    <div class="profile-stat">
+                        <h3>Время в пути</h3>
+                        <p id="totalDriveTime">83 ч</p>
+                    </div>
+                </div>
+                
+                <div class="profile-cars">
+                    <h3>Мои автомобили</h3>
+                    <div class="car-list" id="carList">
+                        <!-- Список машин будет добавлен через JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <nav class="bottom-nav animate__animated animate__fadeInUp">
             <button class="nav-btn active" data-tab="dashboard">
                 <span class="icon">🏠</span>

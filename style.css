@@ -423,4 +423,117 @@ header {
 .change-avatar-btn .icon {
     font-size: 14px;
     color: var(--tg-theme-button-text-color);
+}
+
+/* Добавляем стили для истории и профиля */
+.history-list {
+    padding: 16px;
+}
+
+.history-item {
+    background: var(--tg-theme-secondary-bg-color);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    animation: slideIn 0.3s ease-out;
+}
+
+.history-item .date {
+    font-size: 14px;
+    opacity: 0.8;
+    margin-bottom: 8px;
+}
+
+.history-item .location {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.history-item .duration {
+    color: #7B61FF;
+}
+
+.profile-content {
+    padding: 16px;
+}
+
+.profile-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.user-avatar-container.large {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 16px;
+}
+
+.user-avatar.large {
+    width: 120px;
+    height: 120px;
+}
+
+.profile-name-input {
+    font-size: 24px;
+    text-align: center;
+    width: 100%;
+    border: none;
+    background: none;
+    color: var(--tg-theme-text-color);
+}
+
+.profile-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.profile-stat {
+    background: var(--tg-theme-secondary-bg-color);
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.profile-stat h3 {
+    font-size: 14px;
+    margin: 0 0 8px;
+    opacity: 0.8;
+}
+
+.profile-stat p {
+    font-size: 20px;
+    margin: 0;
+    font-weight: bold;
+}
+
+.car-list {
+    display: grid;
+    gap: 16px;
+}
+
+.car-list-item {
+    background: var(--tg-theme-secondary-bg-color);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.car-list-item img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-right: 16px;
+}
+
+.car-list-item-info h4 {
+    margin: 0 0 4px;
+}
+
+.car-list-item-info p {
+    margin: 0;
+    opacity: 0.8;
 } 

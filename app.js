@@ -437,4 +437,125 @@ function saveCarLocation() {
         tg.sendData(JSON.stringify(data));
         tg.showAlert('Локация машины сохранена!');
     }
-} 
+}
+
+// Добавляем моковые данные
+const mockData = {
+    stats: {
+        distance: 57,
+        driveTime: 43,
+        parkingTime: 324
+    },
+    history: [
+        {
+            date: '2024-03-15 14:30',
+            location: 'ТЦ Мега',
+            duration: '2ч 15мин',
+            coordinates: [55.7522, 37.6156]
+        },
+        {
+            date: '2024-03-14 19:45',
+            location: 'Парк Горького',
+            duration: '1ч 30мин',
+            coordinates: [55.7322, 37.6156]
+        },
+        // Добавьте больше записей истории
+    ],
+    cars: [
+        {
+            id: 1,
+            brand: 'Toyota',
+            model: 'Fortuner GR',
+            plate: 'А123БВ777',
+            image: 'default-car.png'
+        },
+        // Добавьте больше машин
+    ]
+};
+
+// Функция обновления статистики
+function updateStats() {
+    document.getElementById('distanceValue').textContent = `${mockData.stats.distance}km`;
+    document.getElementById('driveTime').textContent = `${mockData.stats.driveTime}min`;
+    document.getElementById('totalParkingTime').textContent = `${mockData.stats.parkingTime}min`;
+}
+
+// Функция отображения истории
+function renderHistory() {
+    const historyList = document.querySelector('.history-list');
+    historyList.innerHTML = '';
+
+    mockData.history.forEach(item => {
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item animate__animated animate__fadeIn';
+        historyItem.innerHTML = `
+            <div class="date">${item.date}</div>
+            <div class="location">${item.location}</div>
+            <div class="duration">⏱ ${item.duration}</div>
+        `;
+        historyList.appendChild(historyItem);
+    });
+}
+
+// Функция отображения списка машин
+function renderCarList() {
+    const carList = document.getElementById('carList');
+    carList.innerHTML = '';
+
+    mockData.cars.forEach(car => {
+        const carItem = document.createElement('div');
+        carItem.className = 'car-list-item animate__animated animate__fadeIn';
+        carItem.innerHTML = `
+            <img src="${car.image}" alt="${car.brand} ${car.model}">
+            <div class="car-list-item-info">
+                <h4>${car.brand} ${car.model}</h4>
+                <p>${car.plate}</p>
+            </div>
+        `;
+        carList.appendChild(carItem);
+    });
+}
+
+// Функция переключения на дашборд
+function showDashboard() {
+    document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+    document.getElementById('dashboard').classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if(btn.dataset.tab === 'dashboard') btn.classList.add('active');
+    });
+}
+
+// Обновляем обработчики навигации
+document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        
+        switch(tab) {
+            case 'map':
+                document.getElementById('mapPage').classList.add('active');
+                map.container.fitToViewport();
+                break;
+            case 'history':
+                document.getElementById('historyPage').classList.add('active');
+                renderHistory();
+                break;
+            case 'profile':
+                document.getElementById('profilePage').classList.add('active');
+                renderCarList();
+                break;
+            default:
+                document.getElementById('dashboard').classList.add('active');
+        }
+    });
+});
+
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', () => {
+    updateStats();
+    // ... остальной код инициализации
+}); 
