@@ -3,14 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram WebApp</title>
+    <title>Магазин</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Мини-приложение Telegram</h1>
-        <button id="mainButton" onclick="sendData()">Отправить данные</button>
+        <div class="header">
+            <h1>Наш магазин</h1>
+            <div class="cart-info">
+                Корзина: <span id="cartCount">0</span> товаров
+            </div>
+        </div>
+
+        <div class="products" id="productsContainer">
+            <!-- Товары будут добавлены через JavaScript -->
+        </div>
+
+        <div class="cart-total">
+            <div class="total">Итого: <span id="totalPrice">0</span> ₽</div>
+        </div>
     </div>
     <script src="app.js"></script>
 </body>
