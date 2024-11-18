@@ -5,44 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CarFinder</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=ваш_api_ключ&lang=ru_RU"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app">
-        <div class="dashboard active" id="dashboard">
-            <header>
-                <div class="menu-btn">☰</div>
+        <div class="page dashboard active" id="dashboard">
+            <header class="animate__animated animate__fadeInDown">
+                <div class="menu-btn" id="menuBtn">☰</div>
                 <h1>Dashboard</h1>
-                <div class="search-btn">🔍</div>
+                <div class="search-btn" id="searchBtn">🔍</div>
             </header>
 
-            <div class="active-car">
+            <div class="search-panel" id="searchPanel">
+                <input type="text" placeholder="Поиск..." class="search-input">
+            </div>
+
+            <div class="menu-panel" id="menuPanel">
+                <div class="menu-header">
+                    <img src="default-avatar.png" alt="Profile" class="menu-avatar">
+                    <h3>Мой профиль</h3>
+                </div>
+                <div class="menu-items">
+                    <div class="menu-item">🚗 Мои машины</div>
+                    <div class="menu-item">📍 История парковок</div>
+                    <div class="menu-item">⚙️ Настройки</div>
+                    <div class="menu-item">ℹ️ О приложении</div>
+                </div>
+            </div>
+
+            <div class="active-car animate__animated animate__fadeInUp">
                 <h2>Active car</h2>
                 <div class="car-card">
                     <div class="car-image-container">
-                        <img id="carImage" src="./default-car.png" alt="Your car" class="car-image">
+                        <img id="carImage" src="default-car.png" alt="Your car" class="car-image">
                         <button class="change-image-btn" onclick="uploadCarImage()">
                             <span class="icon">📷</span>
                         </button>
                     </div>
                     <div class="car-info">
-                        <h3>Fortuner GR</h3>
-                        <p><span id="parkingTime">0</span> мин</p>
+                        <input type="text" id="carName" class="car-name-input" value="Fortuner GR" placeholder="Название машины">
+                        <p class="parking-time"><span id="parkingTime">0</span> мин</p>
                     </div>
                 </div>
             </div>
 
-            <div class="stats">
+            <div class="stats animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
                 <h2>Today</h2>
                 <div class="stats-card">
                     <div class="stat">
-                        <h3>57km</h3>
+                        <h3 id="distanceValue">0</h3>
                         <p>Distance</p>
                     </div>
                     <div class="stat">
-                        <h3>43min</h3>
+                        <h3 id="driveTime">0</h3>
                         <p>Drive time</p>
                     </div>
                     <div class="stat">
@@ -52,29 +69,39 @@
                 </div>
             </div>
 
-            <div class="location-info">
+            <div class="location-info animate__animated animate__fadeInUp" style="animation-delay: 0.3s;">
                 <div class="user-card">
-                    <img src="https://example.com/user-avatar.png" alt="User" class="user-avatar">
-                    <h3>Jane Cooper</h3>
+                    <img id="userAvatar" src="default-avatar.png" alt="User" class="user-avatar">
+                    <div class="user-info">
+                        <input type="text" id="userName" class="user-name-input" value="User Name" placeholder="Ваше имя">
+                        <p class="user-status">Online</p>
+                    </div>
                 </div>
                 <div id="mini-map" class="mini-map"></div>
             </div>
         </div>
 
-        <div class="map-view" id="map"></div>
+        <div class="page map-page" id="mapPage">
+            <div id="map" class="full-map"></div>
+            <button class="back-btn" id="backToMain">←</button>
+        </div>
 
-        <nav class="bottom-nav">
+        <nav class="bottom-nav animate__animated animate__fadeInUp">
             <button class="nav-btn active" data-tab="dashboard">
                 <span class="icon">🏠</span>
+                <span class="label">Главная</span>
             </button>
-            <button class="nav-btn" data-tab="messages">
-                <span class="icon">💬</span>
+            <button class="nav-btn" data-tab="map">
+                <span class="icon">🗺️</span>
+                <span class="label">Карта</span>
             </button>
-            <button class="nav-btn" data-tab="favorites">
-                <span class="icon">❤️</span>
+            <button class="nav-btn" data-tab="history">
+                <span class="icon">📅</span>
+                <span class="label">История</span>
             </button>
             <button class="nav-btn" data-tab="profile">
                 <span class="icon">👤</span>
+                <span class="label">Профиль</span>
             </button>
         </nav>
     </div>

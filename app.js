@@ -1,42 +1,82 @@
 let tg = window.Telegram.WebApp;
 tg.expand();
 
-// Инициализация Mapbox
-mapboxgl.accessToken = 'YOUR_MAPBOX_TOKEN'; // Получите токен на mapbox.com
-
 // Текущие координаты
 let currentLocation = {
     lat: null,
     lng: null
 };
 
-// Инициализация карты
-const map = new mapboxgl.Map({
-    container: 'map',
-    style: 'mapbox://styles/mapbox/dark-v10',
-    center: [37.6156, 55.7522], // Москва по умолчанию
-    zoom: 12
-});
-
-// Мини-карта
-const miniMap = new mapboxgl.Map({
-    container: 'mini-map',
-    style: 'mapbox://styles/mapbox/dark-v10',
-    center: [37.6156, 55.7522],
-    zoom: 12,
-    interactive: false
-});
-
-// Маркер машины
+// Объекты карт
+let map = null;
+let miniMap = null;
 let carMarker = null;
 
-// Добавляем переменные для отслеживания времени
+// Инициализация карт
+function initMaps() {
+    // Основная карта
+    map = new ymaps.Map('map', {
+        center: [55.7522, 37.6156], // Москва
+        zoom: 12,
+        controls: ['zoomControl']
+    });
+
+    // Мини-карта
+    miniMap = new ymaps.Map('mini-map', {
+        center: [55.7522, 37.6156],
+        zoom: 12,
+        controls: []
+    });
+
+    // Отключаем зум на мини-карте
+    miniMap.behaviors.disable(['scrollZoom', 'drag']);
+}
+
+// Добавляем маркер на карты
+function addMarker(coords) {
+    // Удаляем старый маркер если есть
+    if (carMarker) {
+        map.geoObjects.remove(carMarker);
+        miniMap.geoObjects.remove(carMarker);
+    }
+
+    // Создаем новый маркер
+    carMarker = new ymaps.Placemark(coords, {
+        balloonContent: 'Ваша машина здесь'
+    }, {
+        preset: 'islands#redAutoIcon'
+    });
+
+    // Добавляем на обе карты
+    map.geoObjects.add(carMarker);
+    miniMap.geoObjects.add(carMarker.clone());
+}
+
+// Получение геолокации
+function getCurrentLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+            currentLocation.lat = position.coords.latitude;
+            currentLocation.lng = position.coords.longitude;
+            
+            const coords = [currentLocation.lat, currentLocation.lng];
+            
+            // Центрируем карты
+            map.setCenter(coords);
+            miniMap.setCenter(coords);
+            
+            // Добавляем маркер
+            addMarker(coords);
+        });
+    }
+}
+
+// Переменные для отслеживания времени
 let parkingStartTime = null;
 let parkingInterval = null;
 
-// Функция загрузки изображения
+// Загрузка изображения
 function uploadCarImage() {
-    // Создаем невидимый input для файла
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
@@ -46,11 +86,15 @@ function uploadCarImage() {
         if (file) {
             const reader = new FileReader();
             reader.onload = (event) => {
-                // Обновляем изображение
                 document.getElementById('carImage').src = event.target.result;
-                
-                // Сохраняем изображение в localStorage
                 localStorage.setItem('carImage', event.target.result);
+                
+                // Добавляем анимацию
+                const carCard = document.querySelector('.car-card');
+                carCard.classList.add('animate__animated', 'animate__pulse');
+                setTimeout(() => {
+                    carCard.classList.remove('animate__animated', 'animate__pulse');
+                }, 1000);
             };
             reader.readAsDataURL(file);
         }
@@ -59,7 +103,7 @@ function uploadCarImage() {
     input.click();
 }
 
-// Функция обновления времени парковки
+// Обновление времени парковки
 function updateParkingTime() {
     if (parkingStartTime) {
         const now = new Date();
@@ -71,7 +115,6 @@ function updateParkingTime() {
         parkingTimeElement.textContent = diffInMinutes;
         totalParkingTimeElement.textContent = diffInMinutes;
         
-        // Добавляем анимацию при обновлении
         parkingTimeElement.classList.add('time-update');
         totalParkingTimeElement.classList.add('time-update');
         
@@ -82,31 +125,7 @@ function updateParkingTime() {
     }
 }
 
-// Получение текущей геолокации
-function getCurrentLocation() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(position => {
-            currentLocation.lat = position.coords.latitude;
-            currentLocation.lng = position.coords.longitude;
-            
-            // Обновляем карты
-            map.setCenter([currentLocation.lng, currentLocation.lat]);
-            miniMap.setCenter([currentLocation.lng, currentLocation.lat]);
-            
-            // Добавляем маркер
-            if (carMarker) carMarker.remove();
-            carMarker = new mapboxgl.Marker()
-                .setLngLat([currentLocation.lng, currentLocation.lat])
-                .addTo(map);
-            
-            new mapboxgl.Marker()
-                .setLngLat([currentLocation.lng, currentLocation.lat])
-                .addTo(miniMap);
-        });
-    }
-}
-
-// Сохранение локации машины с временем начала парковки
+// Сохранение локации
 function saveCarLocation() {
     if (currentLocation.lat && currentLocation.lng) {
         parkingStartTime = new Date();
@@ -117,51 +136,56 @@ function saveCarLocation() {
             parkingStartTime: parkingStartTime.toISOString()
         };
         
-        // Запускаем таймер обновления времени
         if (parkingInterval) clearInterval(parkingInterval);
-        parkingInterval = setInterval(updateParkingTime, 60000); // Обновляем каждую минуту
+        parkingInterval = setInterval(updateParkingTime, 60000);
         
-        updateParkingTime(); // Обновляем сразу
+        updateParkingTime();
         tg.sendData(JSON.stringify(data));
         tg.showAlert('Локация машины сохранена!');
     }
 }
 
-// Анимация для элементов
-function animateElements() {
-    const elements = document.querySelectorAll('.car-card, .stats-card, .user-card');
-    elements.forEach((el, index) => {
-        el.style.animationDelay = `${index * 0.1}s`;
-    });
-}
+// UI взаимодействия
+document.getElementById('menuBtn').onclick = () => {
+    document.getElementById('menuPanel').classList.toggle('active');
+};
 
-// Переключение между видами
+document.getElementById('searchBtn').onclick = () => {
+    document.getElementById('searchPanel').classList.toggle('active');
+};
+
+document.getElementById('backToMain').onclick = () => {
+    document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+    document.getElementById('dashboard').classList.add('active');
+};
+
+// Навигация
 document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         
-        if (btn.dataset.tab === 'dashboard') {
-            document.getElementById('dashboard').style.display = 'block';
-            document.getElementById('map').style.display = 'none';
-        } else if (btn.dataset.tab === 'map') {
-            document.getElementById('dashboard').style.display = 'none';
-            document.getElementById('map').style.display = 'block';
-            map.resize();
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        
+        if (tab === 'map') {
+            document.getElementById('mapPage').classList.add('active');
+            map.container.fitToViewport();
+        } else if (tab === 'dashboard') {
+            document.getElementById('dashboard').classList.add('active');
         }
     });
 });
 
 // Инициализация
-document.addEventListener('DOMContentLoaded', () => {
-    // Загружаем сохраненное изображение
+ymaps.ready(() => {
+    initMaps();
+    getCurrentLocation();
+    
     const savedImage = localStorage.getItem('carImage');
     if (savedImage) {
         document.getElementById('carImage').src = savedImage;
     }
-    
-    getCurrentLocation();
-    animateElements();
     
     tg.MainButton.setText('Запомнить где припаркована');
     tg.MainButton.onClick(saveCarLocation);
