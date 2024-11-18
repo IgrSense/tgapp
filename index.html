@@ -45,7 +45,11 @@
                         </button>
                     </div>
                     <div class="car-info">
-                        <input type="text" id="carName" class="car-name-input" value="Fortuner GR" placeholder="Название машины">
+                        <input type="text" id="carBrand" class="car-input" placeholder="Марка" value="Toyota">
+                        <input type="text" id="carModel" class="car-input" placeholder="Модель" value="Fortuner GR">
+                        <input type="text" id="carPlate" class="car-plate-input" placeholder="А123БВ777" 
+                               pattern="[АВЕКМНОРСТУХ]\d{3}[АВЕКМНОРСТУХ]{2}\d{2,3}"
+                               title="Формат: А123БВ777">
                         <p class="parking-time"><span id="parkingTime">0</span> мин</p>
                     </div>
                 </div>
@@ -71,7 +75,12 @@
 
             <div class="location-info animate__animated animate__fadeInUp" style="animation-delay: 0.3s;">
                 <div class="user-card">
-                    <img id="userAvatar" src="default-avatar.png" alt="User" class="user-avatar">
+                    <div class="user-avatar-container">
+                        <img id="userAvatar" src="default-avatar.png" alt="User" class="user-avatar">
+                        <button class="change-avatar-btn" onclick="uploadUserAvatar()">
+                            <span class="icon">📷</span>
+                        </button>
+                    </div>
                     <div class="user-info">
                         <input type="text" id="userName" class="user-name-input" value="User Name" placeholder="Ваше имя">
                         <p class="user-status">Online</p>

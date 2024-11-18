@@ -365,4 +365,62 @@ header {
 
 .animate-slide-up {
     animation: slideUp 0.3s ease forwards;
+}
+
+/* Добавляем стили для новых элементов */
+.car-input {
+    background: none;
+    border: none;
+    color: var(--tg-theme-text-color);
+    font-size: 16px;
+    width: 100%;
+    padding: 4px 0;
+    margin-bottom: 8px;
+}
+
+.car-plate-input {
+    background: none;
+    border: 2px solid var(--tg-theme-button-color);
+    color: var(--tg-theme-text-color);
+    font-size: 18px;
+    font-weight: bold;
+    width: 120px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.car-input:focus, .car-plate-input:focus {
+    outline: none;
+    border-bottom: 2px solid var(--tg-theme-button-color);
+}
+
+.user-avatar-container {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    margin-right: 12px;
+}
+
+.change-avatar-btn {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    background: var(--tg-theme-button-color);
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+}
+
+.change-avatar-btn .icon {
+    font-size: 14px;
+    color: var(--tg-theme-button-text-color);
 } 

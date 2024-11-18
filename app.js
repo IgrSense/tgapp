@@ -223,10 +223,13 @@ function saveCarLocation() {
     if (currentLocation.lat && currentLocation.lng) {
         parkingStartTime = new Date();
         
+        const carDetails = JSON.parse(loadFromLocalStorage('carDetails') || '{}');
+        
         const data = {
             type: 'car_location',
             location: currentLocation,
-            parkingStartTime: parkingStartTime.toISOString()
+            parkingStartTime: parkingStartTime.toISOString(),
+            carDetails: carDetails
         };
         
         if (parkingInterval) clearInterval(parkingInterval);
@@ -299,4 +302,139 @@ function updateTheme() {
     document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.buttonTextColor);
 }
 
-updateTheme(); 
+updateTheme();
+
+// Добавляем функции для работы с данными автомобиля
+function saveCarDetails() {
+    const carBrand = document.getElementById('carBrand').value;
+    const carModel = document.getElementById('carModel').value;
+    const carPlate = document.getElementById('carPlate').value;
+    
+    // Проверка формата номера
+    const plateRegex = /[АВЕКМНОРСТУХ]\d{3}[АВЕКМНОРСТУХ]{2}\d{2,3}/;
+    if (carPlate && !plateRegex.test(carPlate.toUpperCase())) {
+        tg.showAlert('Неверный формат номера. Пример: А123БВ777');
+        return;
+    }
+    
+    const carDetails = {
+        brand: carBrand,
+        model: carModel,
+        plate: carPlate.toUpperCase()
+    };
+    
+    saveToLocalStorage('carDetails', JSON.stringify(carDetails));
+    tg.showAlert('Данные автомобиля сохранены!');
+}
+
+// Функция загрузки аватара пользователя
+function uploadUserAvatar() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                tg.showAlert('Файл слишком большой. Максимальный размер: 2MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Создаем квадратное изображение
+                    const size = Math.min(img.width, img.height);
+                    canvas.width = 200;
+                    canvas.height = 200;
+                    
+                    // Вырезаем квадрат из центра и масштабируем
+                    ctx.drawImage(
+                        img,
+                        (img.width - size) / 2,
+                        (img.height - size) / 2,
+                        size,
+                        size,
+                        0,
+                        0,
+                        200,
+                        200
+                    );
+                    
+                    const optimizedAvatar = canvas.toDataURL('image/jpeg', 0.8);
+                    document.getElementById('userAvatar').src = optimizedAvatar;
+                    saveToLocalStorage('userAvatar', optimizedAvatar);
+                    
+                    const avatarEl = document.getElementById('userAvatar');
+                    avatarEl.classList.add('animate__animated', 'animate__pulse');
+                    setTimeout(() => {
+                        avatarEl.classList.remove('animate__animated', 'animate__pulse');
+                    }, 1000);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+    
+    input.click();
+}
+
+// Добавляем обработчики событий для сохранения данных
+document.addEventListener('DOMContentLoaded', () => {
+    // Загружаем сохраненные данные автомобиля
+    const savedCarDetails = loadFromLocalStorage('carDetails');
+    if (savedCarDetails) {
+        const carDetails = JSON.parse(savedCarDetails);
+        document.getElementById('carBrand').value = carDetails.brand || '';
+        document.getElementById('carModel').value = carDetails.model || '';
+        document.getElementById('carPlate').value = carDetails.plate || '';
+    }
+    
+    // Загружаем сохраненный аватар
+    const savedAvatar = loadFromLocalStorage('userAvatar');
+    if (savedAvatar) {
+        document.getElementById('userAvatar').src = savedAvatar;
+    }
+    
+    // Добавляем обработчики изменений
+    ['carBrand', 'carModel', 'carPlate'].forEach(id => {
+        const element = document.getElementById(id);
+        element.addEventListener('change', saveCarDetails);
+        element.addEventListener('blur', saveCarDetails);
+    });
+    
+    // Автоматическое форматирование номера
+    const plateInput = document.getElementById('carPlate');
+    plateInput.addEventListener('input', (e) => {
+        e.target.value = e.target.value.toUpperCase();
+    });
+});
+
+// Обновляем функцию сохранения локации
+function saveCarLocation() {
+    if (currentLocation.lat && currentLocation.lng) {
+        parkingStartTime = new Date();
+        
+        const carDetails = JSON.parse(loadFromLocalStorage('carDetails') || '{}');
+        
+        const data = {
+            type: 'car_location',
+            location: currentLocation,
+            parkingStartTime: parkingStartTime.toISOString(),
+            carDetails: carDetails
+        };
+        
+        if (parkingInterval) clearInterval(parkingInterval);
+        parkingInterval = setInterval(updateParkingTime, 60000);
+        
+        updateParkingTime();
+        tg.sendData(JSON.stringify(data));
+        tg.showAlert('Локация машины сохранена!');
+    }
+} 
