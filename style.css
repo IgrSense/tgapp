@@ -162,4 +162,53 @@ header {
 
 .icon {
     font-size: 24px;
+}
+
+.car-image-container {
+    position: relative;
+    width: 200px;
+    height: 150px;
+    margin-right: 16px;
+}
+
+.car-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.change-image-btn {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.change-image-btn:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.change-image-btn .icon {
+    color: white;
+    font-size: 20px;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.time-update {
+    animation: pulse 0.3s ease-in-out;
 } 

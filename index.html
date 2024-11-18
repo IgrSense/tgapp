@@ -21,10 +21,15 @@
             <div class="active-car">
                 <h2>Active car</h2>
                 <div class="car-card">
-                    <img src="https://example.com/car-image.png" alt="Your car" class="car-image">
+                    <div class="car-image-container">
+                        <img id="carImage" src="./default-car.png" alt="Your car" class="car-image">
+                        <button class="change-image-btn" onclick="uploadCarImage()">
+                            <span class="icon">📷</span>
+                        </button>
+                    </div>
                     <div class="car-info">
                         <h3>Fortuner GR</h3>
-                        <p>$45.00/h</p>
+                        <p><span id="parkingTime">0</span> мин</p>
                     </div>
                 </div>
             </div>
@@ -41,8 +46,8 @@
                         <p>Drive time</p>
                     </div>
                     <div class="stat">
-                        <h3>$324</h3>
-                        <p>Money</p>
+                        <h3 id="totalParkingTime">0</h3>
+                        <p>Parking time</p>
                     </div>
                 </div>
             </div>

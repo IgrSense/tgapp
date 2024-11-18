@@ -30,6 +30,58 @@ const miniMap = new mapboxgl.Map({
 // Маркер машины
 let carMarker = null;
 
+// Добавляем переменные для отслеживания времени
+let parkingStartTime = null;
+let parkingInterval = null;
+
+// Функция загрузки изображения
+function uploadCarImage() {
+    // Создаем невидимый input для файла
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                // Обновляем изображение
+                document.getElementById('carImage').src = event.target.result;
+                
+                // Сохраняем изображение в localStorage
+                localStorage.setItem('carImage', event.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+    
+    input.click();
+}
+
+// Функция обновления времени парковки
+function updateParkingTime() {
+    if (parkingStartTime) {
+        const now = new Date();
+        const diffInMinutes = Math.floor((now - parkingStartTime) / (1000 * 60));
+        
+        const parkingTimeElement = document.getElementById('parkingTime');
+        const totalParkingTimeElement = document.getElementById('totalParkingTime');
+        
+        parkingTimeElement.textContent = diffInMinutes;
+        totalParkingTimeElement.textContent = diffInMinutes;
+        
+        // Добавляем анимацию при обновлении
+        parkingTimeElement.classList.add('time-update');
+        totalParkingTimeElement.classList.add('time-update');
+        
+        setTimeout(() => {
+            parkingTimeElement.classList.remove('time-update');
+            totalParkingTimeElement.classList.remove('time-update');
+        }, 300);
+    }
+}
+
 // Получение текущей геолокации
 function getCurrentLocation() {
     if (navigator.geolocation) {
@@ -54,13 +106,22 @@ function getCurrentLocation() {
     }
 }
 
-// Сохранение локации машины
+// Сохранение локации машины с временем начала парковки
 function saveCarLocation() {
     if (currentLocation.lat && currentLocation.lng) {
+        parkingStartTime = new Date();
+        
         const data = {
             type: 'car_location',
-            location: currentLocation
+            location: currentLocation,
+            parkingStartTime: parkingStartTime.toISOString()
         };
+        
+        // Запускаем таймер обновления времени
+        if (parkingInterval) clearInterval(parkingInterval);
+        parkingInterval = setInterval(updateParkingTime, 60000); // Обновляем каждую минуту
+        
+        updateParkingTime(); // Обновляем сразу
         tg.sendData(JSON.stringify(data));
         tg.showAlert('Локация машины сохранена!');
     }
@@ -93,11 +154,16 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 
 // Инициализация
 document.addEventListener('DOMContentLoaded', () => {
+    // Загружаем сохраненное изображение
+    const savedImage = localStorage.getItem('carImage');
+    if (savedImage) {
+        document.getElementById('carImage').src = savedImage;
+    }
+    
     getCurrentLocation();
     animateElements();
     
-    // Добавляем кнопку на MainButton
-    tg.MainButton.setText('Сохранить локацию');
+    tg.MainButton.setText('Запомнить где припаркована');
     tg.MainButton.onClick(saveCarLocation);
     tg.MainButton.show();
 });
