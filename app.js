@@ -358,10 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (navigateBtn) {
         navigateBtn.addEventListener('click', () => {
             if (parkedLocation) {
-                switchPage('mapPage');
-                if (map) {
-                    map.setView([parkedLocation.lat, parkedLocation.lng], 16);
-                }
+                navigateToCar();
             } else {
                 tg.showAlert('Локация машины не сохранена');
             }
@@ -405,66 +402,94 @@ async function navigateToCar() {
         // Переключаемся на страницу карты
         switchPage('mapPage');
 
-        // Строим маршрут
-        await buildRoute(startPoint, endPoint);
-
-        // Добавляем кнопку для открытия навигации в Google Maps или Яндекс.Навигаторе
-        const navigationUrl = `https://www.google.com/maps/dir/?api=1&origin=${startPoint[0]},${startPoint[1]}&destination=${endPoint[0]},${endPoint[1]}&travelmode=walking`;
-        const yandexUrl = `yandexnavi://build_route_on_map?lat_to=${endPoint[0]}&lon_to=${endPoint[1]}`;
-
-        // Создаем кнопки навигации, если их еще нет
-        let navButtons = document.getElementById('navigationButtons');
-        if (!navButtons) {
-            navButtons = document.createElement('div');
-            navButtons.id = 'navigationButtons';
-            navButtons.style.cssText = `
-                position: fixed;
-                bottom: 80px;
-                left: 50%;
-                transform: translateX(-50%);
-                display: flex;
-                gap: 10px;
-                z-index: 1000;
-            `;
-            
-            const googleButton = document.createElement('a');
-            googleButton.href = navigationUrl;
-            googleButton.target = '_blank';
-            googleButton.className = 'navigation-btn modern';
-            googleButton.innerHTML = '🗺️ Google Maps';
-            googleButton.style.cssText = `
-                background: #4CAF50;
-                color: white;
-                padding: 12px 24px;
-                border-radius: 24px;
-                text-decoration: none;
-                font-weight: 600;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            `;
-
-            const yandexButton = document.createElement('a');
-            yandexButton.href = yandexUrl;
-            yandexButton.className = 'navigation-btn modern';
-            yandexButton.innerHTML = '🚶‍♂️ Яндекс.Навигатор';
-            yandexButton.style.cssText = googleButton.style.cssText;
-            yandexButton.style.background = '#FF4B4B';
-
-            navButtons.appendChild(googleButton);
-            navButtons.appendChild(yandexButton);
-            document.getElementById('mapPage').appendChild(navButtons);
+        // Строим маршрут на карте
+        if (routeControl) {
+            map.removeControl(routeControl);
         }
 
+        // Создаем новый маршрут
+        routeControl = L.Routing.control({
+            waypoints: [
+                L.latLng(startPoint[0], startPoint[1]),
+                L.latLng(endPoint[0], endPoint[1])
+            ],
+            router: L.Routing.osrmv1({
+                serviceUrl: 'https://router.project-osrm.org/route/v1',
+                profile: 'walking'
+            }),
+            lineOptions: {
+                styles: [{color: '#7B61FF', weight: 6}]
+            },
+            showAlternatives: false,
+            fitSelectedRoutes: true,
+            show: false // Скрываем панель с инструкциями
+        }).addTo(map);
+
+        // Создаем кнопки навигации
+        const navButtonsContainer = document.createElement('div');
+        navButtonsContainer.className = 'navigation-buttons modern';
+        navButtonsContainer.style.cssText = `
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+            padding: 16px;
+        `;
+
+        // Google Maps кнопка
+        const googleUrl = `https://www.google.com/maps/dir/?api=1&origin=${startPoint[0]},${startPoint[1]}&destination=${endPoint[0]},${endPoint[1]}&travelmode=walking`;
+        const googleButton = document.createElement('a');
+        googleButton.href = googleUrl;
+        googleButton.target = '_blank';
+        googleButton.className = 'navigation-btn modern';
+        googleButton.innerHTML = '🗺️ Google Maps';
+        googleButton.style.cssText = `
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 24px;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        `;
+
+        // Яндекс.Навигатор кнопка
+        const yandexUrl = `yandexnavi://build_route_on_map?lat_to=${endPoint[0]}&lon_to=${endPoint[1]}`;
+        const yandexButton = document.createElement('a');
+        yandexButton.href = yandexUrl;
+        yandexButton.className = 'navigation-btn modern';
+        yandexButton.innerHTML = '🚶‍♂️ Яндекс.Навигатор';
+        yandexButton.style.cssText = googleButton.style.cssText;
+        yandexButton.style.background = '#FF4B4B';
+
+        navButtonsContainer.appendChild(googleButton);
+        navButtonsContainer.appendChild(yandexButton);
+
+        // Удаляем старые кнопки навигации, если они есть
+        const oldButtons = document.querySelector('.navigation-buttons');
+        if (oldButtons) {
+            oldButtons.remove();
+        }
+
+        // Добавляем новые кнопки
+        document.getElementById('mapPage').appendChild(navButtonsContainer);
+
         // Показываем информацию о маршруте
-        const distance = await calculateDistance(startPoint, endPoint);
-        tg.showAlert(
-            `🚗 Машина найдена!\n` +
-            `📍 Расстояние: ${(distance/1000).toFixed(1)} км\n` +
-            `⏱ Примерное время пешком: ${Math.round(distance/80)} мин\n\n` +
-            `Нажмите на кнопку навигации для построения маршрута`
-        );
+        routeControl.on('routesfound', function(e) {
+            const routes = e.routes;
+            const route = routes[0];
+            tg.showAlert(
+                `🚗 Машина найдена!\n` +
+                `📍 Расстояние: ${(route.summary.totalDistance/1000).toFixed(1)} км\n` +
+                `⏱ Время пешком: ${Math.round(route.summary.totalTime/60)} мин\n\n` +
+                `Выберите навигатор для построения маршрута`
+            );
+        });
 
     } catch (error) {
         console.error('Ошибка навигации:', error);
