@@ -60,15 +60,21 @@ async function addToHomescreen() {
             return;
         }
 
-        const status = await tg.checkHomeScreenStatus();
-        console.log('Статус домашнего экрана:', status);
-        tg.showAlert("Статус: " + JSON.stringify(status));
-        
-        if (status.can_add) {
-            await tg.addToHomeScreen();
-            tg.showAlert("Приложение добавлено на домашний экран!");
-        } else {
-            tg.showAlert("Невозможно добавить на домашний экран");
+        try {
+            const status = await tg.checkHomeScreenStatus();
+            if (!status) {
+                tg.showAlert("Функция недоступна в текущей версии Telegram");
+                return;
+            }
+            
+            if (status.can_add) {
+                await tg.addToHomeScreen();
+                tg.showAlert("Приложение добавлено на домашний экран!");
+            } else {
+                tg.showAlert("Невозможно добавить на домашний экран: " + (status.reason || 'неизвестная причина'));
+            }
+        } catch (error) {
+            tg.showAlert("Ошибка проверки статуса: " + error.message);
         }
     } catch (error) {
         tg.showAlert('Ошибка: ' + error.message);
@@ -76,7 +82,18 @@ async function addToHomescreen() {
     }
 }
 
-// Инициализация при загрузке страницы
+// Добавляем функцию для переключения страниц
+function switchPage(pageId) {
+    document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    
+    // Если открываем карту, обновляем её размер
+    if (pageId === 'mapPage' && window.map) {
+        window.map.container.fitToViewport();
+    }
+}
+
+// Обновляем обработчики навигации
 document.addEventListener('DOMContentLoaded', () => {
     // Проверяем наличие элементов перед добавлением обработчиков
     const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -114,6 +131,44 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Инициализируем safe areas
     updateSafeAreas();
+
+    // Добавляем обработчики для навигационных кнопок
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Убираем активный класс со всех кнопок
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Определяем, какую страницу показывать
+            const tab = btn.dataset.tab;
+            switch(tab) {
+                case 'dashboard':
+                    switchPage('dashboard');
+                    break;
+                case 'map':
+                    switchPage('mapPage');
+                    break;
+                case 'history':
+                    switchPage('historyPage');
+                    break;
+                case 'profile':
+                    switchPage('profilePage');
+                    break;
+            }
+        });
+    });
+
+    // Добавляем обработчик для кнопки "Назад"
+    const backToMainBtn = document.getElementById('backToMain');
+    if (backToMainBtn) {
+        backToMainBtn.addEventListener('click', () => {
+            switchPage('dashboard');
+            // Обновляем активную кнопку в навигации
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === 'dashboard');
+            });
+        });
+    }
 });
 
 // Функция обновления safe areas
