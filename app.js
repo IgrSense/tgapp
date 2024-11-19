@@ -224,7 +224,7 @@ function animateNumber(element, value) {
     element.classList.add('pulse');
 }
 
-// Обновляем функцию переключеия страниц
+// Обновляем функцию переключе��я страниц
 function switchPage(pageId) {
     // Скрываем все страницы
     document.querySelectorAll('.page').forEach(page => {
@@ -466,29 +466,16 @@ async function navigateToCar() {
         navButton.addEventListener('click', () => {
             const userAgent = navigator.userAgent.toLowerCase();
             const isIOS = /iphone|ipad|ipod/.test(userAgent);
-            const isAndroid = userAgent.indexOf("android") > -1;
 
-            // Создаем URL для разных платформ
-            const googleUrl = `https://www.google.com/maps/dir/?api=1&origin=${startPoint[0]},${startPoint[1]}&destination=${endPoint[0]},${endPoint[1]}&travelmode=walking`;
-            const appleUrl = `maps://maps.apple.com/?saddr=${startPoint[0]},${startPoint[1]}&daddr=${endPoint[0]},${endPoint[1]}&dirflg=w`;
-            const yandexUrl = `yandexnavi://build_route_on_map?lat_to=${endPoint[0]}&lon_to=${endPoint[1]}`;
+            // Создаем URL для iOS
+            const appleUrl = `maps://?saddr=${startPoint[0]},${startPoint[1]}&daddr=${endPoint[0]},${endPoint[1]}&dirflg=w`;
 
-            // Выбираем подходящий URL в зависимости от платформы
+            // Для iOS используем стандартный Maps
             if (isIOS) {
-                // Сначала пробуем Apple Maps, если не сработает - Google Maps
                 window.location.href = appleUrl;
-                setTimeout(() => {
-                    window.location.href = googleUrl;
-                }, 1000);
-            } else if (isAndroid) {
-                // Сначала пробуем Яндекс.Навигатор, если не сработает - Google Maps
-                window.location.href = yandexUrl;
-                setTimeout(() => {
-                    window.location.href = googleUrl;
-                }, 1000);
             } else {
-                // В остальных случаях открываем Google Maps
-                window.location.href = googleUrl;
+                // Для остальных используем стандартный геопротокол
+                window.location.href = `geo:${endPoint[0]},${endPoint[1]}?q=${endPoint[0]},${endPoint[1]}(Моя машина)`;
             }
         });
 
