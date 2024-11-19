@@ -1,15 +1,18 @@
 let tg = window.Telegram.WebApp;
 tg.expand();
 
-// Добавляем новые функции для работы с полноэкранным режимом и домашним экраном
+// Обновляем функции для работы с полноэкранным режимом и домашним экраном
 async function toggleFullscreen() {
     try {
         if (!tg.isFullscreen) {
+            tg.showAlert("Включаем полноэкранный режим...");
             await tg.requestFullscreen();
         } else {
+            tg.showAlert("Выключаем полноэкранный режим...");
             await tg.exitFullscreen();
         }
     } catch (error) {
+        tg.showAlert('Ошибка: ' + error.message);
         console.error('Ошибка переключения полноэкранного режима:', error);
     }
 }
@@ -17,10 +20,16 @@ async function toggleFullscreen() {
 async function addToHomescreen() {
     try {
         const status = await tg.checkHomeScreenStatus();
+        tg.showAlert("Статус: " + JSON.stringify(status));
+        
         if (status.can_add) {
             await tg.addToHomeScreen();
+            tg.showAlert("Приложение добавлено на домашний экран!");
+        } else {
+            tg.showAlert("Невозможно добавить на домашний экран");
         }
     } catch (error) {
+        tg.showAlert('Ошибка: ' + error.message);
         console.error('Ошибка добавления на домашний экран:', error);
     }
 }
@@ -217,7 +226,7 @@ function saveCarName(name) {
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
-    // Загружаем сох��аненное изображение
+    // Загружаем сохраненное изображение
     const savedImage = loadFromLocalStorage('carImage');
     if (savedImage) {
         const carImage = document.getElementById('carImage');
@@ -249,18 +258,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const homeScreenBtn = document.getElementById('homeScreenBtn');
     
     if (fullscreenBtn) {
-        fullscreenBtn.onclick = toggleFullscreen;
+        fullscreenBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleFullscreen();
+        });
     }
     
-    // Проверяем возможность добавления на домашний экран
-    tg.checkHomeScreenStatus().then(status => {
-        if (status.can_add && homeScreenBtn) {
-            homeScreenBtn.style.display = 'flex';
-            homeScreenBtn.onclick = addToHomescreen;
-        } else if (homeScreenBtn) {
+    if (homeScreenBtn) {
+        homeScreenBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            addToHomescreen();
+        });
+        
+        // Проверяем доступность добавления на домашний экран
+        tg.checkHomeScreenStatus().then(status => {
+            if (!status.can_add) {
+                homeScreenBtn.style.display = 'none';
+            }
+        }).catch(error => {
+            console.error('Ошибка проверки статуса:', error);
             homeScreenBtn.style.display = 'none';
-        }
-    });
+        });
+    }
     
     // Инициализируем safe areas
     updateSafeAreas();
