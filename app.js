@@ -398,7 +398,60 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
-}); 
+
+    // Обработчик для кнопки полноэкранного режима
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', async () => {
+            try {
+                if (!tg.isFullscreen) {
+                    await tg.requestFullscreen();
+                } else {
+                    await tg.exitFullscreen();
+                }
+            } catch (error) {
+                console.error('Ошибка переключения полноэкранного режима:', error);
+            }
+        });
+    }
+
+    // Обработчик для кнопки добавления на домашний экран
+    const homeScreenBtn = document.getElementById('homeScreenBtn');
+    if (homeScreenBtn) {
+        // Сначала проверяем, доступно ли добавление на домашний экран
+        tg.checkHomeScreenStatus().then(status => {
+            if (status.can_add) {
+                homeScreenBtn.style.display = 'flex';
+                homeScreenBtn.addEventListener('click', async () => {
+                    try {
+                        await tg.addToHomeScreen();
+                    } catch (error) {
+                        console.error('Ошибка добавления на домашний экран:', error);
+                    }
+                });
+            } else {
+                homeScreenBtn.style.display = 'none';
+            }
+        });
+    }
+
+    // Добавляем обработчики событий Telegram WebApp
+    tg.onEvent('fullscreenChanged', () => {
+        document.body.classList.toggle('fullscreen', tg.isFullscreen);
+    });
+
+    tg.onEvent('homeScreenAdded', () => {
+        tg.showAlert('Приложение добавлено на домашний экран!');
+    });
+
+    tg.onEvent('safeAreaChanged', () => {
+        updateSafeAreas();
+    });
+
+    tg.onEvent('contentSafeAreaChanged', () => {
+        updateSafeAreas();
+    });
+});
 
 // Обновляем функцию навигации к машине
 async function navigateToCar() {
@@ -792,4 +845,21 @@ async function buildRouteFromHistory(lat, lng) {
         console.error('Ошибка построения маршрута:', error);
         tg.showAlert('Ошибка построения маршрута: ' + error.message);
     }
+}
+
+// Функция обновления безопасных областей
+function updateSafeAreas() {
+    const root = document.documentElement;
+    const safeArea = tg.safeAreaInset || { top: 0, bottom: 0, left: 0, right: 0 };
+    const contentSafeArea = tg.contentSafeAreaInset || { top: 0, bottom: 0, left: 0, right: 0 };
+
+    root.style.setProperty('--safe-area-top', `${safeArea.top}px`);
+    root.style.setProperty('--safe-area-bottom', `${safeArea.bottom}px`);
+    root.style.setProperty('--safe-area-left', `${safeArea.left}px`);
+    root.style.setProperty('--safe-area-right', `${safeArea.right}px`);
+    
+    root.style.setProperty('--content-safe-area-top', `${contentSafeArea.top}px`);
+    root.style.setProperty('--content-safe-area-bottom', `${contentSafeArea.bottom}px`);
+    root.style.setProperty('--content-safe-area-left', `${contentSafeArea.left}px`);
+    root.style.setProperty('--content-safe-area-right', `${contentSafeArea.right}px`);
 } 
