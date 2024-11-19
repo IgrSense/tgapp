@@ -328,8 +328,58 @@ function initializeStats() {
 
 // Вызываем инициализацию при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
+    // Обработчики для навигационных кнопок
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const tab = btn.dataset.tab;
+            switch(tab) {
+                case 'dashboard':
+                    switchPage('dashboard');
+                    break;
+                case 'map':
+                    switchPage('mapPage');
+                    if (map) map.container.fitToViewport();
+                    break;
+                case 'history':
+                    switchPage('historyPage');
+                    renderHistory();
+                    break;
+                case 'profile':
+                    switchPage('profilePage');
+                    renderProfile();
+                    break;
+            }
+        });
+    });
+
+    // Обработчик для кнопки парковки
+    const parkBtn = document.getElementById('parkBtn');
+    if (parkBtn) {
+        parkBtn.addEventListener('click', toggleParking);
+    }
+
+    // Обработчик для кнопки навигации
+    const navigateBtn = document.getElementById('navigateBtn');
+    if (navigateBtn) {
+        navigateBtn.addEventListener('click', navigateToCar);
+    }
+
+    // Обработчик для кнопки "Назад"
+    const backBtn = document.getElementById('backToMain');
+    if (backBtn) {
+        backBtn.addEventListener('click', () => {
+            switchPage('dashboard');
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === 'dashboard');
+            });
+        });
+    }
+
+    // Инициализация статистики
     initializeStats();
-    // ... остальной код ...
 });
 
 // Обновляем функцию toggleParking
@@ -341,8 +391,11 @@ function toggleParking() {
         // Начинаем парковку
         isParked = true;
         parkingStartTime = new Date();
-        parkBtn.classList.add('active');
-        parkBtn.querySelector('.text').textContent = 'Завершить парковку';
+        
+        if (parkBtn) {
+            parkBtn.classList.add('active');
+            parkBtn.querySelector('.text').textContent = 'Завершить парковку';
+        }
         
         // Показываем кнопку навигации
         if (navigateBtn) {
@@ -375,15 +428,16 @@ function toggleParking() {
             
             // Показываем уведомление
             tg.showAlert('Локация машины сохранена!');
-        } else {
-            tg.showAlert('Не удалось получить текущую локацию. Пожалуйста, разрешите доступ к геолокации.');
         }
     } else {
         // Завершаем парковку
         isParked = false;
         clearInterval(parkingInterval);
-        parkBtn.classList.remove('active');
-        parkBtn.querySelector('.text').textContent = 'Припарковаться';
+        
+        if (parkBtn) {
+            parkBtn.classList.remove('active');
+            parkBtn.querySelector('.text').textContent = 'Припарковаться';
+        }
         
         // Скрываем кнопку навигации
         if (navigateBtn) {
@@ -417,301 +471,168 @@ function toggleParking() {
     }
 }
 
-// Добавляем функцию навигации к машине
-function navigateToCar() {
+// Добавляем глобальные переменные для маршрута
+let routeToCarPath = null;
+
+// Обновляем функцию navigateToCar
+async function navigateToCar() {
     if (!parkedLocation) {
         tg.showAlert('Локация машины не сохранена');
         return;
     }
-    
-    // Переключаемся на страницу карты
-    switchPage('mapPage');
-    
-    // Центрируем карту на месте парковки
-    if (map) {
-        map.setCenter([parkedLocation.lat, parkedLocation.lng], 16);
+
+    // Получаем текущую геопозицию
+    try {
+        const position = await getCurrentPositionPromise();
+        const startPoint = [position.coords.latitude, position.coords.longitude];
+        const endPoint = [parkedLocation.lat, parkedLocation.lng];
+
+        // Переключаемся на страницу карты
+        switchPage('mapPage');
+
+        // Строим маршрут
+        await buildRoute(startPoint, endPoint);
+        
+        // Центрируем карту чтобы был виден весь маршрут
+        if (routeToCarPath) {
+            map.setBounds(routeToCarPath.getBounds(), {
+                checkZoomRange: true,
+                duration: 500
+            });
+        }
+    } catch (error) {
+        tg.showAlert('Ошибка построения маршрута: ' + error.message);
     }
-    
-    // Обновляем активную вкладку в навигации
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === 'map');
+}
+
+// Функция для получения геопозиции через Promise
+function getCurrentPositionPromise() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject(new Error('Геолокация не поддерживается'));
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+        });
     });
 }
 
-// В обработчике DOMContentLoaded оставляем только привязку обработчиков событий
-document.addEventListener('DOMContentLoaded', () => {
-    // Проверяем наличие элементов перед добавлением обработчиков
-    const fullscreenBtn = document.getElementById('fullscreenBtn');
-    const homeScreenBtn = document.getElementById('homeScreenBtn');
-    const menuBtn = document.getElementById('menuBtn');
-    const searchBtn = document.getElementById('searchBtn');
-    const menuPanel = document.getElementById('menuPanel');
-    const searchPanel = document.getElementById('searchPanel');
-    
-    if (fullscreenBtn) {
-        fullscreenBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            toggleFullscreen();
-        });
+// Функция построения маршрута
+async function buildRoute(startPoint, endPoint) {
+    // Удаляем предыдущий маршрут если есть
+    if (routeToCarPath) {
+        map.geoObjects.remove(routeToCarPath);
     }
-    
-    if (homeScreenBtn) {
-        homeScreenBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            addToHomescreen();
-        });
-    }
-    
-    if (menuBtn && menuPanel) {
-        menuBtn.onclick = () => {
-            menuPanel.classList.toggle('active');
-        };
-    }
-    
-    if (searchBtn && searchPanel) {
-        searchBtn.onclick = () => {
-            searchPanel.classList.toggle('active');
-        };
-    }
-    
-    // Инициализируем safe areas
-    updateSafeAreas();
 
-    // Добавляем обработчики для навигационных кнопок
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            // Убираем активный класс со всех кнопок
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            // Определяем, какую страницу показывать
-            const tab = btn.dataset.tab;
-            switch(tab) {
-                case 'dashboard':
-                    switchPage('dashboard');
-                    break;
-                case 'map':
-                    switchPage('mapPage');
-                    break;
-                case 'history':
-                    switchPage('historyPage');
-                    break;
-                case 'profile':
-                    switchPage('profilePage');
-                    break;
-            }
-        });
+    // Создаем мультимаршрут
+    const multiRoute = new ymaps.multiRouter.MultiRoute({
+        referencePoints: [
+            startPoint,
+            endPoint
+        ],
+        params: {
+            routingMode: 'pedestrian' // пешеходный маршрут
+        }
+    }, {
+        boundsAutoApply: true,
+        routeActiveStrokeWidth: 6,
+        routeActiveStrokeColor: "#7B61FF",
+        routeActiveStrokeStyle: 'solid',
+        routeStrokeWidth: 6,
+        routeStrokeColor: "#7B61FF",
+        routeStrokeStyle: 'solid',
+        pinIconFillColor: "#7B61FF",
+        wayPointStartIconFillColor: "#4CAF50",
+        wayPointFinishIconFillColor: "#FF4B4B",
+        // Внешний вид путевых точек
+        wayPointStartIconColor: "#FFFFFF",
+        wayPointFinishIconColor: "#FFFFFF",
+        // Внешний вид транзитных точек
+        viaPointIconRadius: 7,
+        viaPointIconFillColor: "#7B61FF",
+        viaPointActiveIconFillColor: "#7B61FF",
+        viaPointIconColor: "#FFFFFF",
+        // Транзитные точки можно перетаскивать
+        viaPointDraggable: true,
+        // Позволяет скрыть иконки путевых точек
+        pinVisible: true
     });
 
-    // Добавляем обработчик для кнопки "Назад"
-    const backToMainBtn = document.getElementById('backToMain');
-    if (backToMainBtn) {
-        backToMainBtn.addEventListener('click', () => {
-            switchPage('dashboard');
-            // Обновляем активную кнопку в навигации
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.tab === 'dashboard');
-            });
-        });
-    }
+    // Добавляем маршрут на карту
+    map.geoObjects.add(multiRoute);
+    routeToCarPath = multiRoute;
 
-    // Добавляем рендеринг истории и профиля при переключении вкладок
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tab = btn.dataset.tab;
-            if (tab === 'history') {
-                renderHistory();
-            } else if (tab === 'profile') {
-                renderProfile();
+    // Подписываемся на событие готовности маршрута
+    return new Promise((resolve, reject) => {
+        multiRoute.model.events.add('requestsuccess', function() {
+            // Получаем первый маршрут
+            const activeRoute = multiRoute.getActiveRoute();
+            if (activeRoute) {
+                // Получаем длину маршрута в метрах
+                const distance = activeRoute.properties.get("distance").text;
+                // Получаем время маршрута в секундах
+                const duration = activeRoute.properties.get("duration").text;
+                
+                // Показываем информацию о маршруте
+                tg.showAlert(`Расстояние до машины: ${distance}\nВремя пешком: ${duration}`);
             }
+            resolve();
+        });
+
+        multiRoute.model.events.add('requestfail', function(error) {
+            reject(new Error('Не удалось построить маршрут'));
         });
     });
+}
 
-    // Добавляем переменные для отслеживания парковки
-    let isParked = false;
-    let parkingStartTime = null;
-    let parkingInterval = null;
-    let currentStats = {
-        distance: 57,
-        driveTime: 43,
-        money: 324
-    };
-
-    // Функция для анимированного обновления числа
-    function animateNumber(element, value) {
-        element.textContent = value;
-        element.classList.add('animated');
-        setTimeout(() => element.classList.remove('animated'), 300);
-    }
-
-    // Функция обновления статистики
-    function updateStats() {
-        if (!isParked) return;
-
-        const now = new Date();
-        const timeDiff = (now - parkingStartTime) / 1000; // разница в секундах
-
-        // Обновляем расстояние (случайное изменение)
-        currentStats.distance += Math.random() * 0.1;
-        animateNumber(
-            document.querySelector('.stats-card .stat:nth-child(1) h3'),
-            `${Math.round(currentStats.distance)}km`
-        );
-
-        // Обновляем время
-        currentStats.driveTime = Math.floor(timeDiff / 60);
-        animateNumber(
-            document.querySelector('.stats-card .stat:nth-child(2) h3'),
-            `${currentStats.driveTime}min`
-        );
-
-        // Обновляем деньги (1 цент в секунду)
-        currentStats.money += 0.01;
-        animateNumber(
-            document.querySelector('.stats-card .stat:nth-child(3) h3'),
-            `$${currentStats.money.toFixed(2)}`
-        );
-    }
-
-    // Добавляем переменную для хранения локации парковки
-    let parkedLocation = null;
-
-    // Обновляем функцию toggleParking
-    function toggleParking() {
-        const parkBtn = document.getElementById('parkBtn');
-        const navigateBtn = document.getElementById('navigateBtn');
-        
-        if (!isParked) {
-            // Начинаем парковку
-            isParked = true;
-            parkingStartTime = new Date();
-            parkBtn.classList.add('active');
-            parkBtn.querySelector('.text').textContent = 'Завершить парковку';
-            
-            // Сохраняем локацию парковки
-            if (currentLocation.lat && currentLocation.lng) {
-                parkedLocation = {...currentLocation};
-                
-                // Показываем кнопку навигации
-                if (navigateBtn) {
-                    navigateBtn.style.display = 'flex';
-                    // Добавляем обработчик для кнопки навигации, если его еще нет
-                    if (!navigateBtn.onclick) {
-                        navigateBtn.onclick = navigateToCar;
-                    }
-                }
-                
-                // Добавляем маркер на карты
-                addMarker([parkedLocation.lat, parkedLocation.lng]);
-                
-                // Центрируем мини-карту на месте парковки
-                if (miniMap) {
-                    miniMap.setCenter([parkedLocation.lat, parkedLocation.lng]);
-                }
-                
-                // Отправляем данные в Telegram
-                const data = {
-                    type: 'car_location',
-                    location: parkedLocation,
-                    parkingStartTime: parkingStartTime.toISOString()
-                };
-                tg.sendData(JSON.stringify(data));
-                
-                // Показываем уведомление
-                tg.showAlert('Локация машины сохранена!');
-                
-                // Запускаем интервал обновления статистики
-                parkingInterval = setInterval(updateStats, 1000);
-            } else {
-                tg.showAlert('Не удалось получить текущую локацию. Пожалуйста, разрешите доступ к геолокации.');
-            }
-        } else {
-            // Завершаем парковку
-            isParked = false;
-            clearInterval(parkingInterval);
-            parkBtn.classList.remove('active');
-            parkBtn.querySelector('.text').textContent = 'Припарковаться';
-            
-            // Скрываем кнопку навигации
-            if (navigateBtn) {
-                navigateBtn.style.display = 'none';
-            }
-            
-            // Очищаем локацию парковки
-            parkedLocation = null;
-            
-            // Удаляем маркер с карт
-            if (carMarker) {
-                map.geoObjects.remove(carMarker);
-                miniMap.geoObjects.remove(carMarker);
-            }
-            
-            // Добавляем запись в историю
-            const historyEntry = {
-                date: new Date().toISOString().split('T')[0],
-                time: new Date().toTimeString().split(' ')[0].slice(0, 5),
-                location: 'Current Location',
-                duration: `${currentStats.driveTime}min`,
-                cost: `$${currentStats.money.toFixed(2)}`,
-                paid: false
-            };
-            mockData.history.unshift(historyEntry);
-            
-            // Если открыта страница истории, обновляем её
-            if (document.getElementById('historyPage').classList.contains('active')) {
-                renderHistory();
-            }
-        }
-    }
-
-    // Добавляем функцию навигации к машине
-    function navigateToCar() {
-        if (!parkedLocation) {
-            tg.showAlert('Локация машины не сохранена');
-            return;
-        }
-        
-        // Переключаемся на страницу карты
-        switchPage('mapPage');
-        
-        // Центрируем карту на месте парковки
-        if (map) {
-            map.setCenter([parkedLocation.lat, parkedLocation.lng], 16);
-        }
-        
-        // Обновляем активную вкладку в навигации
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.tab === 'map');
+// Обновляем инициализацию карт
+function initMaps() {
+    try {
+        // Основная карта
+        map = new ymaps.Map('map', {
+            center: [55.7522, 37.6156],
+            zoom: 12,
+            controls: ['zoomControl', 'routeButtonControl']
         });
-    }
 
-    // Добавляем обработчики в DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', () => {
-        // ... существующий код ...
-
-        // Добавляем обработчик для кнопки навигации
-        const navigateBtn = document.getElementById('navigateBtn');
-        if (navigateBtn) {
-            navigateBtn.addEventListener('click', navigateToCar);
-        }
-        
-        // Обновляем моковые данные пользователя
-        mockData.profile = {
-            name: 'Игорь',
-            avatar: 'https://i.imgur.com/user-avatar.jpg',
-            stats: {
-                totalTrips: 42,
-                totalDistance: '1,250 km',
-                totalTime: '83h'
+        // Добавляем элемент управления поиском
+        let searchControl = new ymaps.control.SearchControl({
+            options: {
+                provider: 'yandex#search',
+                size: 'large'
             }
-        };
-    });
+        });
+        map.controls.add(searchControl);
 
-    // Добавляем обработчик для кнопки парковки
-    const parkBtn = document.getElementById('parkBtn');
-    if (parkBtn) {
-        parkBtn.addEventListener('click', toggleParking);
+        // Мини-карта
+        miniMap = new ymaps.Map('mini-map', {
+            center: [55.7522, 37.6156],
+            zoom: 12,
+            controls: []
+        });
+
+        // Отключаем зум на мини-карте
+        miniMap.behaviors.disable(['scrollZoom', 'drag']);
+        
+        // Получаем текущую геолокацию
+        getCurrentLocation();
+        
+    } catch (error) {
+        console.error('Ошибка инициализации карт:', error);
     }
+}
+
+// Обновляем загрузку API Яндекс.Карт
+ymaps.ready(() => {
+    ymaps.modules.require([
+        'multiRouter.MultiRoute'
+    ], function() {
+        initMaps();
+    });
 });
 
 // Функция обновления safe areas
