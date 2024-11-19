@@ -37,6 +37,36 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
+// Добавляем моковые данные для истории
+const mockData = {
+    history: [
+        {
+            date: '2024-03-15',
+            time: '14:30',
+            location: 'ТЦ Мега',
+            duration: '2ч 15мин',
+            cost: '$45.00',
+            paid: false
+        },
+        {
+            date: '2024-03-15',
+            time: '10:15',
+            location: 'Центр города',
+            duration: '1ч 30мин',
+            cost: '$32.50',
+            paid: true
+        },
+        {
+            date: '2024-03-14',
+            time: '19:45',
+            location: 'Аэропорт',
+            duration: '3ч 00мин',
+            cost: '$67.00',
+            paid: true
+        }
+    ]
+};
+
 // Функция инициализации карт
 function initMaps() {
     try {
@@ -295,12 +325,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Обработчики для навигационных кнопок
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            // Убираем активный класс со всех кнопок
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            // Добавляем активный класс текущей кнопке
             btn.classList.add('active');
             
-            // Переключаем страницу
             const tab = btn.dataset.tab;
             switch(tab) {
                 case 'dashboard':
@@ -311,6 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
                 case 'history':
                     switchPage('historyPage');
+                    renderHistory();
                     break;
                 case 'profile':
                     switchPage('profilePage');
@@ -458,4 +486,73 @@ function calculateDistance(start, end) {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
     return R * c; // расстояние в метрах
+}
+
+// Функция отображения истории
+function renderHistory() {
+    const historyList = document.getElementById('historyList');
+    if (!historyList) return;
+
+    historyList.innerHTML = mockData.history.map(item => `
+        <div class="history-item modern animate__animated animate__fadeInUp">
+            <div class="history-item-header">
+                <div class="history-date">
+                    <h3>${item.date}</h3>
+                    <p>${item.time}</p>
+                </div>
+                <div class="history-cost">${item.cost}</div>
+            </div>
+            <div class="history-details">
+                <p class="history-location">📍 ${item.location}</p>
+                <p class="history-duration">⏱ ${item.duration}</p>
+            </div>
+            <div class="history-actions">
+                ${item.paid 
+                    ? '<button class="history-btn paid">✓ Оплачено</button>'
+                    : '<button class="history-btn pay" onclick="payHistoryItem(this)">Оплатить</button>'
+                }
+            </div>
+        </div>
+    `).join('');
+
+    // Добавляем обработчики для фильтров
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            filterHistory(e.target.textContent.toLowerCase());
+        });
+    });
+}
+
+// Функция фильтрации истории
+function filterHistory(filter) {
+    const items = document.querySelectorAll('.history-item');
+    items.forEach(item => {
+        const isPaid = item.querySelector('.history-btn.paid') !== null;
+        switch(filter) {
+            case 'paid':
+                item.style.display = isPaid ? 'block' : 'none';
+                break;
+            case 'unpaid':
+                item.style.display = !isPaid ? 'block' : 'none';
+                break;
+            default:
+                item.style.display = 'block';
+        }
+    });
+}
+
+// Функция оплаты
+function payHistoryItem(button) {
+    button.classList.remove('pay');
+    button.classList.add('paid');
+    button.textContent = '✓ Оплачено';
+    button.onclick = null;
+    
+    // Анимация
+    button.closest('.history-item').classList.add('animate__animated', 'animate__pulse');
+    setTimeout(() => {
+        button.closest('.history-item').classList.remove('animate__animated', 'animate__pulse');
+    }, 1000);
 } 
