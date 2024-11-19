@@ -1,9 +1,22 @@
 let tg = window.Telegram.WebApp;
 tg.expand();
 
+// Добавим проверку доступных методов
+console.log('Доступные методы WebApp:', Object.keys(tg));
+console.log('Версия WebApp:', tg.version);
+
 // Обновляем функции для работы с полноэкранным режимом и домашним экраном
 async function toggleFullscreen() {
     try {
+        console.log('isFullscreen доступен:', 'isFullscreen' in tg);
+        console.log('requestFullscreen доступен:', 'requestFullscreen' in tg);
+        console.log('exitFullscreen доступен:', 'exitFullscreen' in tg);
+        
+        if (!('requestFullscreen' in tg)) {
+            tg.showAlert("Функция полного экрана пока не поддерживается в этой версии Telegram");
+            return;
+        }
+
         if (!tg.isFullscreen) {
             tg.showAlert("Включаем полноэкранный режим...");
             await tg.requestFullscreen();
@@ -19,7 +32,16 @@ async function toggleFullscreen() {
 
 async function addToHomescreen() {
     try {
+        console.log('checkHomeScreenStatus доступен:', 'checkHomeScreenStatus' in tg);
+        console.log('addToHomeScreen доступен:', 'addToHomeScreen' in tg);
+        
+        if (!('checkHomeScreenStatus' in tg)) {
+            tg.showAlert("Функция добавления на домашний экран пока не поддерживается в этой версии Telegram");
+            return;
+        }
+
         const status = await tg.checkHomeScreenStatus();
+        console.log('Статус домашнего экрана:', status);
         tg.showAlert("Статус: " + JSON.stringify(status));
         
         if (status.can_add) {
