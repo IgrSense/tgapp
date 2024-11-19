@@ -224,7 +224,7 @@ function animateNumber(element, value) {
     element.classList.add('pulse');
 }
 
-// Обновляем функцию переключе��я страниц
+// Обновляем функцию переключе�� страниц
 function switchPage(pageId) {
     // Скрываем все страницы
     document.querySelectorAll('.page').forEach(page => {
@@ -467,15 +467,17 @@ async function navigateToCar() {
             const userAgent = navigator.userAgent.toLowerCase();
             const isIOS = /iphone|ipad|ipod/.test(userAgent);
 
-            // Создаем URL для iOS
-            const appleUrl = `maps://?saddr=${startPoint[0]},${startPoint[1]}&daddr=${endPoint[0]},${endPoint[1]}&dirflg=w`;
+            // Создаем URL для Apple Maps
+            const appleUrl = `https://maps.apple.com/maps?ll=${endPoint[0]},${endPoint[1]}&q=${endPoint[0]},${endPoint[1]}&t=m`;
+            
+            // Для Android создаем URL для Google Maps
+            const googleUrl = `https://www.google.com/maps/search/?api=1&query=${endPoint[0]},${endPoint[1]}`;
 
-            // Для iOS используем стандартный Maps
+            // Выбираем URL в зависимости от платформы
             if (isIOS) {
                 window.location.href = appleUrl;
             } else {
-                // Для остальных используем стандартный геопротокол
-                window.location.href = `geo:${endPoint[0]},${endPoint[1]}?q=${endPoint[0]},${endPoint[1]}(Моя машина)`;
+                window.location.href = googleUrl;
             }
         });
 
