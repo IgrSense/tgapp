@@ -425,7 +425,7 @@ async function navigateToCar() {
             show: false // Скрываем панель с инструкциями
         }).addTo(map);
 
-        // Создаем кнопки навигации
+        // Создаем универсальную кнопку навигации
         const navButtonsContainer = document.createElement('div');
         navButtonsContainer.className = 'navigation-buttons modern';
         navButtonsContainer.style.cssText = `
@@ -433,42 +433,60 @@ async function navigateToCar() {
             bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
             z-index: 1000;
             padding: 16px;
+            width: 90%;
+            max-width: 400px;
         `;
 
-        // Google Maps кнопка
-        const googleUrl = `https://www.google.com/maps/dir/?api=1&origin=${startPoint[0]},${startPoint[1]}&destination=${endPoint[0]},${endPoint[1]}&travelmode=walking`;
-        const googleButton = document.createElement('a');
-        googleButton.href = googleUrl;
-        googleButton.target = '_blank';
-        googleButton.className = 'navigation-btn modern';
-        googleButton.innerHTML = '🗺️ Google Maps';
-        googleButton.style.cssText = `
+        // Универсальная кнопка навигации
+        const navButton = document.createElement('button');
+        navButton.className = 'navigation-btn modern';
+        navButton.innerHTML = '🗺️ Построить маршрут';
+        navButton.style.cssText = `
+            width: 100%;
             background: #4CAF50;
             color: white;
-            padding: 12px 24px;
+            padding: 16px 24px;
             border-radius: 24px;
-            text-decoration: none;
+            border: none;
+            font-size: 16px;
             font-weight: 600;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         `;
 
-        // Яндекс.Навигатор кнопка
-        const yandexUrl = `yandexnavi://build_route_on_map?lat_to=${endPoint[0]}&lon_to=${endPoint[1]}`;
-        const yandexButton = document.createElement('a');
-        yandexButton.href = yandexUrl;
-        yandexButton.className = 'navigation-btn modern';
-        yandexButton.innerHTML = '🚶‍♂️ Яндекс.Навигатор';
-        yandexButton.style.cssText = googleButton.style.cssText;
-        yandexButton.style.background = '#FF4B4B';
+        // Обработчик для кнопки навигации
+        navButton.addEventListener('click', () => {
+            // Создаем универсальные ссылки для разных платформ
+            const geoUrl = `geo:${endPoint[0]},${endPoint[1]}?q=${endPoint[0]},${endPoint[1]}(Моя машина)`;
+            const googleUrl = `https://www.google.com/maps/dir/?api=1&origin=${startPoint[0]},${startPoint[1]}&destination=${endPoint[0]},${endPoint[1]}&travelmode=walking`;
+            const appleUrl = `maps://maps.apple.com/?saddr=${startPoint[0]},${startPoint[1]}&daddr=${endPoint[0]},${endPoint[1]}&dirflg=w`;
+            
+            // Определяем платформу
+            const userAgent = navigator.userAgent.toLowerCase();
+            const isAndroid = userAgent.indexOf("android") > -1;
+            const isIOS = /iphone|ipad|ipod/.test(userAgent);
+            
+            // Выбираем подходящий URL
+            let navigationUrl;
+            if (isAndroid) {
+                navigationUrl = geoUrl;
+            } else if (isIOS) {
+                navigationUrl = appleUrl;
+            } else {
+                navigationUrl = googleUrl;
+            }
 
-        navButtonsContainer.appendChild(googleButton);
-        navButtonsContainer.appendChild(yandexButton);
+            // Открываем навигацию
+            window.location.href = navigationUrl;
+        });
+
+        navButtonsContainer.appendChild(navButton);
 
         // Удаляем старые кнопки навигации, если они есть
         const oldButtons = document.querySelector('.navigation-buttons');
@@ -476,7 +494,7 @@ async function navigateToCar() {
             oldButtons.remove();
         }
 
-        // Добавляем новые кнопки
+        // Добавляем новую кнопку
         document.getElementById('mapPage').appendChild(navButtonsContainer);
 
         // Показываем информацию о маршруте
@@ -487,7 +505,7 @@ async function navigateToCar() {
                 `🚗 Машина найдена!\n` +
                 `📍 Расстояние: ${(route.summary.totalDistance/1000).toFixed(1)} км\n` +
                 `⏱ Время пешком: ${Math.round(route.summary.totalTime/60)} мин\n\n` +
-                `Выберите навигатор для построения маршрута`
+                `Нажмите на кнопку "Построить маршрут" для навигации`
             );
         });
 
