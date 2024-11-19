@@ -396,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('carPlate').value = carDetails.plate || '';
     }
     
-    // Загружаем сохраненный аватар
+    // Загружаем с��храненный аватар
     const savedAvatar = loadFromLocalStorage('userAvatar');
     if (savedAvatar) {
         document.getElementById('userAvatar').src = savedAvatar;

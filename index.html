@@ -36,21 +36,58 @@
             </div>
 
             <div class="active-car animate__animated animate__fadeInUp">
-                <h2>Active car</h2>
-                <div class="car-card">
-                    <div class="car-image-container">
-                        <img id="carImage" src="default-car.png" alt="Your car" class="car-image">
-                        <button class="change-image-btn" onclick="uploadCarImage()">
-                            <span class="icon">📷</span>
-                        </button>
+                <div class="car-3d-container">
+                    <div class="sketchfab-embed-wrapper"> 
+                        <iframe title="BMW X1 M Sport 2020" 
+                                frameborder="0" 
+                                allowfullscreen 
+                                mozallowfullscreen="true" 
+                                webkitallowfullscreen="true" 
+                                allow="autoplay; fullscreen; xr-spatial-tracking" 
+                                xr-spatial-tracking 
+                                execution-while-out-of-viewport 
+                                execution-while-not-rendered 
+                                web-share 
+                                src="https://sketchfab.com/models/1fa7af0e1d804afdbe8babed44a2eed6/embed">
+                        </iframe>
                     </div>
-                    <div class="car-info">
-                        <input type="text" id="carBrand" class="car-input" placeholder="Марка" value="Toyota">
-                        <input type="text" id="carModel" class="car-input" placeholder="Модель" value="Fortuner GR">
-                        <input type="text" id="carPlate" class="car-plate-input" placeholder="А123БВ777" 
-                               pattern="[АВЕКМНОРСТУХ]\d{3}[АВЕКМНОРСТУХ]{2}\d{2,3}"
-                               title="Формат: А123БВ777">
-                        <p class="parking-time"><span id="parkingTime">0</span> мин</p>
+                    <div class="car-controls">
+                        <button class="control-btn"><span class="icon">🔌</span></button>
+                        <button class="control-btn"><span class="icon">❄️</span></button>
+                        <button class="control-btn"><span class="icon">🔒</span></button>
+                        <button class="control-btn"><span class="icon">📍</span></button>
+                    </div>
+                </div>
+                
+                <div class="car-stats-grid">
+                    <div class="stat-card">
+                        <h3>Battery</h3>
+                        <div class="battery-indicator">
+                            <div class="battery-level" style="width: 55%"></div>
+                        </div>
+                        <p>332 km remaining</p>
+                        <p class="charging-status">55% Charging</p>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>Temperature</h3>
+                        <div class="temp-value">21°C</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>Consumption</h3>
+                        <div class="circular-progress">
+                            <span class="progress-value">4.3</span>
+                            <span class="progress-unit">l/100km</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>Speed</h3>
+                        <div class="circular-progress">
+                            <span class="progress-value">324</span>
+                            <span class="progress-unit">km/h</span>
+                        </div>
                     </div>
                 </div>
             </div>
