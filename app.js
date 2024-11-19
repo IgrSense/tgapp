@@ -402,30 +402,37 @@ async function navigateToCar() {
         // Переключаемся на страницу карты
         switchPage('mapPage');
 
-        // Строим маршрут на карте
+        // Рисуем линию маршрута на карте
         if (routeControl) {
-            map.removeControl(routeControl);
+            map.removeLayer(routeControl);
         }
 
-        // Создаем новый маршрут
-        routeControl = L.Routing.control({
-            waypoints: [
-                L.latLng(startPoint[0], startPoint[1]),
-                L.latLng(endPoint[0], endPoint[1])
-            ],
-            router: L.Routing.osrmv1({
-                serviceUrl: 'https://router.project-osrm.org/route/v1',
-                profile: 'walking'
-            }),
-            lineOptions: {
-                styles: [{color: '#7B61FF', weight: 6}]
-            },
-            showAlternatives: false,
-            fitSelectedRoutes: true,
-            show: false // Скрываем панель с инструкциями
-        }).addTo(map);
+        // Добавляем маркеры начала и конца маршрута
+        const startIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41]
+        });
 
-        // Создаем универсальную кнопку навигации
+        const endIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41]
+        });
+
+        const startMarker = L.marker([startPoint[0], startPoint[1]], {icon: startIcon}).addTo(map);
+        const endMarker = L.marker([endPoint[0], endPoint[1]], {icon: endIcon}).addTo(map);
+
+        // Рисуем прямую линию между точками
+        routeControl = L.polyline([
+            [startPoint[0], startPoint[1]],
+            [endPoint[0], endPoint[1]]
+        ], {color: '#7B61FF', weight: 6}).addTo(map);
+
+        // Подгоняем карту под маршрут
+        map.fitBounds(routeControl.getBounds(), {padding: [50, 50]});
+
+        // Создаем кнопку навигации
         const navButtonsContainer = document.createElement('div');
         navButtonsContainer.className = 'navigation-buttons modern';
         navButtonsContainer.style.cssText = `
@@ -442,7 +449,7 @@ async function navigateToCar() {
         // Универсальная кнопка навигации
         const navButton = document.createElement('button');
         navButton.className = 'navigation-btn modern';
-        navButton.innerHTML = '🗺️ Построить маршрут';
+        navButton.innerHTML = '🗺️ Открыть навигацию';
         navButton.style.cssText = `
             width: 100%;
             background: #4CAF50;
@@ -462,28 +469,30 @@ async function navigateToCar() {
 
         // Обработчик для кнопки навигации
         navButton.addEventListener('click', () => {
-            // Создаем универсальные ссылки для разных платформ
-            const geoUrl = `geo:${endPoint[0]},${endPoint[1]}?q=${endPoint[0]},${endPoint[1]}(Моя машина)`;
+            // Создаем ссылки для разных платформ
             const googleUrl = `https://www.google.com/maps/dir/?api=1&origin=${startPoint[0]},${startPoint[1]}&destination=${endPoint[0]},${endPoint[1]}&travelmode=walking`;
             const appleUrl = `maps://maps.apple.com/?saddr=${startPoint[0]},${startPoint[1]}&daddr=${endPoint[0]},${endPoint[1]}&dirflg=w`;
-            
+            const yandexUrl = `yandexnavi://build_route_on_map?lat_to=${endPoint[0]}&lon_to=${endPoint[1]}`;
+
             // Определяем платформу
             const userAgent = navigator.userAgent.toLowerCase();
-            const isAndroid = userAgent.indexOf("android") > -1;
             const isIOS = /iphone|ipad|ipod/.test(userAgent);
-            
-            // Выбираем подходящий URL
-            let navigationUrl;
-            if (isAndroid) {
-                navigationUrl = geoUrl;
-            } else if (isIOS) {
-                navigationUrl = appleUrl;
-            } else {
-                navigationUrl = googleUrl;
-            }
+            const isAndroid = userAgent.indexOf("android") > -1;
 
-            // Открываем навигацию
-            window.location.href = navigationUrl;
+            // Открываем соответствующую навигацию
+            if (isIOS) {
+                window.location.href = appleUrl;
+                setTimeout(() => {
+                    window.location.href = googleUrl;
+                }, 2000);
+            } else if (isAndroid) {
+                window.location.href = yandexUrl;
+                setTimeout(() => {
+                    window.location.href = googleUrl;
+                }, 2000);
+            } else {
+                window.location.href = googleUrl;
+            }
         });
 
         navButtonsContainer.appendChild(navButton);
@@ -498,16 +507,15 @@ async function navigateToCar() {
         document.getElementById('mapPage').appendChild(navButtonsContainer);
 
         // Показываем информацию о маршруте
-        routeControl.on('routesfound', function(e) {
-            const routes = e.routes;
-            const route = routes[0];
-            tg.showAlert(
-                `🚗 Машина найдена!\n` +
-                `📍 Расстояние: ${(route.summary.totalDistance/1000).toFixed(1)} км\n` +
-                `⏱ Время пешком: ${Math.round(route.summary.totalTime/60)} мин\n\n` +
-                `Нажмите на кнопку "Построить маршрут" для навигации`
-            );
-        });
+        const distance = calculateDistance(startPoint, endPoint);
+        const walkingTime = Math.round(distance / 80); // Примерная скорость ходьбы 4.8 км/ч
+        
+        tg.showAlert(
+            `🚗 Машина найдена!\n` +
+            `📍 Расстояние: ${(distance/1000).toFixed(1)} км\n` +
+            `⏱ Время пешком: ${walkingTime} мин\n\n` +
+            `Нажмите "Открыть навигацию" для построения маршрута`
+        );
 
     } catch (error) {
         console.error('Ошибка навигации:', error);
