@@ -1,6 +1,17 @@
+:root {
+    --safe-area-top: 0px;
+    --safe-area-bottom: 0px;
+    --safe-area-left: 0px;
+    --safe-area-right: 0px;
+    --content-safe-area-top: 0px;
+    --content-safe-area-bottom: 0px;
+    --content-safe-area-left: 0px;
+    --content-safe-area-right: 0px;
+}
+
 body {
     margin: 0;
-    padding: 0;
+    padding: var(--safe-area-top) var(--safe-area-right) var(--safe-area-bottom) var(--safe-area-left);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: var(--tg-theme-bg-color);
     color: var(--tg-theme-text-color);
@@ -124,6 +135,7 @@ header {
     padding: 16px;
     background: var(--tg-theme-bg-color);
     border-top: 1px solid var(--tg-theme-secondary-bg-color);
+    padding-bottom: calc(16px + var(--safe-area-bottom));
 }
 
 .nav-btn {
@@ -536,4 +548,35 @@ header {
 .car-list-item-info p {
     margin: 0;
     opacity: 0.8;
+}
+
+.fullscreen-btn,
+.home-screen-btn {
+    position: fixed;
+    background: var(--tg-theme-button-color);
+    color: var(--tg-theme-button-text-color);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.fullscreen-btn {
+    top: calc(16px + var(--safe-area-top));
+    right: calc(16px + var(--safe-area-right));
+}
+
+.home-screen-btn {
+    top: calc(16px + var(--safe-area-top));
+    right: calc(72px + var(--safe-area-right));
+}
+
+body.fullscreen {
+    padding: var(--content-safe-area-top) var(--content-safe-area-right) var(--content-safe-area-bottom) var(--content-safe-area-left);
 } 
