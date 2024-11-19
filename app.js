@@ -224,7 +224,7 @@ function animateNumber(element, value) {
     element.classList.add('pulse');
 }
 
-// Обновляем функцию переключе страниц
+// Обновляем функцию перек��юче страниц
 function switchPage(pageId) {
     // Скрываем все страницы
     document.querySelectorAll('.page').forEach(page => {
@@ -340,7 +340,7 @@ function updateStats() {
 
 // Обновляем обработчики событий
 document.addEventListener('DOMContentLoaded', () => {
-    // Инициализация карт и статистики
+    // Инициализация карт и с��атистики
     initMaps();
     initializeStats();
     
@@ -418,21 +418,35 @@ document.addEventListener('DOMContentLoaded', () => {
     // Обработчик для кнопки добавления на домашний экран
     const homeScreenBtn = document.getElementById('homeScreenBtn');
     if (homeScreenBtn) {
-        // Сначала проверяем, доступно ли добавление на домашний экран
-        tg.checkHomeScreenStatus().then(status => {
-            if (status.can_add) {
-                homeScreenBtn.style.display = 'flex';
-                homeScreenBtn.addEventListener('click', async () => {
-                    try {
+        // Проверяем поддержку функции
+        if (tg.version && parseFloat(tg.version) >= 6.2) {
+            homeScreenBtn.style.display = 'flex';
+            
+            // Добавляем обработчик
+            homeScreenBtn.addEventListener('click', async () => {
+                try {
+                    // Проверяем возможность добавления
+                    const result = await tg.checkHomeScreenStatus();
+                    console.log('Home screen status:', result);
+                    
+                    if (result && result.can_add) {
+                        // Если можно добавить, добавляем
                         await tg.addToHomeScreen();
-                    } catch (error) {
-                        console.error('Ошибка добавления на домашний экран:', error);
+                        tg.showAlert('Приложение добавлено на домашний экран!');
+                    } else {
+                        // Если нельзя, показываем сообщение
+                        tg.showAlert('Невозможно добавить на домашний экран: ' + 
+                            (result.reason || 'функция недоступна'));
                     }
-                });
-            } else {
-                homeScreenBtn.style.display = 'none';
-            }
-        });
+                } catch (error) {
+                    console.error('Home screen error:', error);
+                    tg.showAlert('Ошибка при добавлении на домашний экран');
+                }
+            });
+        } else {
+            // Если версия Telegram не поддерживает функцию, скрываем кнопку
+            homeScreenBtn.style.display = 'none';
+        }
     }
 
     // Добавляем обработчики событий Telegram WebApp
