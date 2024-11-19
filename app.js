@@ -432,7 +432,7 @@ async function navigateToCar() {
         // Подгоняем карту под маршрут
         map.fitBounds(routeControl.getBounds(), {padding: [50, 50]});
 
-        // Сздаем универсальную ссылку для навигации
+        // С��даем универсальную ссылку для навигации
         const universalUrl = `geo:${endPoint[0]},${endPoint[1]}?q=${endPoint[0]},${endPoint[1]}(Моя машина)`;
 
         // Создаем кнопку навигации
@@ -497,23 +497,23 @@ async function navigateToCar() {
                 {
                     name: 'Apple Maps',
                     icon: '🗺️',
-                    url: `maps://?daddr=${endPoint[0]},${endPoint[1]}`,
+                    url: `https://maps.apple.com/?ll=${endPoint[0]},${endPoint[1]}&q=Моя+машина&t=m`,
                     platform: 'ios'
                 },
                 {
                     name: 'Яндекс.Карты',
                     icon: '📍',
-                    url: `yandexmaps://maps.yandex.ru/?ll=${endPoint[1]},${endPoint[0]}&z=18&pt=${endPoint[1]},${endPoint[0]},pm2rdm`
+                    url: `https://yandex.ru/maps/?pt=${endPoint[1]},${endPoint[0]}&z=18&l=map`
                 },
                 {
                     name: 'Яндекс.Навигатор',
                     icon: '🚗',
-                    url: `yandexnavi://build_route_on_map?lat_to=${endPoint[0]}&lon_to=${endPoint[1]}&lat_from=${startPoint[0]}&lon_from=${startPoint[1]}`
+                    url: `https://yandex.ru/maps/213/moscow/?mode=routes&rtext=${startPoint[0]},${startPoint[1]}~${endPoint[0]},${endPoint[1]}&rtt=pd`
                 },
                 {
                     name: '2ГИС',
                     icon: '🌍',
-                    url: `dgis://2gis.ru/routeSearch/rsType/car/from/${startPoint[1]},${startPoint[0]}/to/${endPoint[1]},${endPoint[0]}`
+                    url: `https://2gis.ru/geo/${endPoint[1]},${endPoint[0]}`
                 }
             ];
 
@@ -546,8 +546,8 @@ async function navigateToCar() {
                 button.innerHTML = `${nav.icon} ${nav.name}`;
                 
                 button.addEventListener('click', () => {
-                    // Пробуем открыть приложение
-                    window.location.href = nav.url;
+                    // Используем Telegram WebApp для открытия ссылки
+                    tg.openLink(nav.url);
                     
                     // Закрываем меню
                     menuContainer.style.transform = 'translateY(100%)';
