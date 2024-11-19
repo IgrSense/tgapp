@@ -552,31 +552,38 @@ header {
 
 .fullscreen-btn,
 .home-screen-btn {
-    position: fixed;
-    background: var(--tg-theme-button-color);
-    color: var(--tg-theme-button-text-color);
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 1000;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-
-.fullscreen-btn {
-    top: calc(16px + var(--safe-area-top));
-    right: calc(16px + var(--safe-area-right));
-}
-
-.home-screen-btn {
-    top: calc(16px + var(--safe-area-top));
-    right: calc(72px + var(--safe-area-right));
+    position: static;
+    background: none;
+    box-shadow: none;
+    width: auto;
+    height: auto;
 }
 
 body.fullscreen {
     padding: var(--content-safe-area-top) var(--content-safe-area-right) var(--content-safe-area-bottom) var(--content-safe-area-left);
+}
+
+/* Обновляем стили для header */
+.header-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    padding: 8px;
+    cursor: pointer;
+    color: var(--tg-theme-text-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.header-btn:hover {
+    opacity: 1;
 } 

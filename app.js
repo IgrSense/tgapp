@@ -217,7 +217,7 @@ function saveCarName(name) {
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
-    // Загружаем сохраненное изображение
+    // Загружаем сох��аненное изображение
     const savedImage = loadFromLocalStorage('carImage');
     if (savedImage) {
         const carImage = document.getElementById('carImage');
@@ -245,20 +245,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Добавляем кнопку для переключения полноэкранного режима
-    const fullscreenBtn = document.createElement('button');
-    fullscreenBtn.className = 'fullscreen-btn';
-    fullscreenBtn.innerHTML = '⛶';
-    fullscreenBtn.onclick = toggleFullscreen;
-    document.body.appendChild(fullscreenBtn);
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const homeScreenBtn = document.getElementById('homeScreenBtn');
+    
+    if (fullscreenBtn) {
+        fullscreenBtn.onclick = toggleFullscreen;
+    }
     
     // Проверяем возможность добавления на домашний экран
     tg.checkHomeScreenStatus().then(status => {
-        if (status.can_add) {
-            const homeScreenBtn = document.createElement('button');
-            homeScreenBtn.className = 'home-screen-btn';
-            homeScreenBtn.innerHTML = '🏠';
+        if (status.can_add && homeScreenBtn) {
+            homeScreenBtn.style.display = 'flex';
             homeScreenBtn.onclick = addToHomescreen;
-            document.body.appendChild(homeScreenBtn);
+        } else if (homeScreenBtn) {
+            homeScreenBtn.style.display = 'none';
         }
     });
     
