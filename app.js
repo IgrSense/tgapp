@@ -224,7 +224,7 @@ function animateNumber(element, value) {
     element.classList.add('pulse');
 }
 
-// Обновляем функцию переключения страниц
+// Обновляем функцию переключе��ия страниц
 function switchPage(pageId) {
     // Скрываем все страницы
     document.querySelectorAll('.page').forEach(page => {
@@ -432,26 +432,20 @@ async function navigateToCar() {
         // Подгоняем карту под маршрут
         map.fitBounds(routeControl.getBounds(), {padding: [50, 50]});
 
-        // Создаем кнопку навигации
-        const navButtonsContainer = document.createElement('div');
-        navButtonsContainer.className = 'navigation-buttons modern';
-        navButtonsContainer.style.cssText = `
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            padding: 16px;
-            width: 90%;
-            max-width: 400px;
-        `;
+        // Создаем универсальную ссылку для навигации
+        const universalUrl = `geo:${endPoint[0]},${endPoint[1]}?q=${endPoint[0]},${endPoint[1]}(Моя машина)`;
 
-        // Универсальная кнопка навигации
+        // Создаем кнопку навигации
         const navButton = document.createElement('button');
         navButton.className = 'navigation-btn modern';
         navButton.innerHTML = '🗺️ Открыть навигацию';
         navButton.style.cssText = `
-            width: 100%;
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
             background: #4CAF50;
             color: white;
             padding: 16px 24px;
@@ -464,47 +458,23 @@ async function navigateToCar() {
             justify-content: center;
             gap: 8px;
             cursor: pointer;
+            z-index: 1000;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         `;
 
         // Обработчик для кнопки навигации
         navButton.addEventListener('click', () => {
-            // Создаем ссылки для разных платформ
-            const googleUrl = `https://www.google.com/maps/dir/?api=1&origin=${startPoint[0]},${startPoint[1]}&destination=${endPoint[0]},${endPoint[1]}&travelmode=walking`;
-            const appleUrl = `maps://maps.apple.com/?saddr=${startPoint[0]},${startPoint[1]}&daddr=${endPoint[0]},${endPoint[1]}&dirflg=w`;
-            const yandexUrl = `yandexnavi://build_route_on_map?lat_to=${endPoint[0]}&lon_to=${endPoint[1]}`;
-
-            // Определяем платформу
-            const userAgent = navigator.userAgent.toLowerCase();
-            const isIOS = /iphone|ipad|ipod/.test(userAgent);
-            const isAndroid = userAgent.indexOf("android") > -1;
-
-            // Открываем соответствующую навигацию
-            if (isIOS) {
-                window.location.href = appleUrl;
-                setTimeout(() => {
-                    window.location.href = googleUrl;
-                }, 2000);
-            } else if (isAndroid) {
-                window.location.href = yandexUrl;
-                setTimeout(() => {
-                    window.location.href = googleUrl;
-                }, 2000);
-            } else {
-                window.location.href = googleUrl;
-            }
+            window.location.href = universalUrl;
         });
 
-        navButtonsContainer.appendChild(navButton);
-
-        // Удаляем старые кнопки навигации, если они есть
-        const oldButtons = document.querySelector('.navigation-buttons');
-        if (oldButtons) {
-            oldButtons.remove();
+        // Удаляем старую кнопку навигации, если она есть
+        const oldButton = document.querySelector('.navigation-btn');
+        if (oldButton) {
+            oldButton.remove();
         }
 
         // Добавляем новую кнопку
-        document.getElementById('mapPage').appendChild(navButtonsContainer);
+        document.getElementById('mapPage').appendChild(navButton);
 
         // Показываем информацию о маршруте
         const distance = calculateDistance(startPoint, endPoint);
