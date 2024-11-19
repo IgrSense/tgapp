@@ -432,7 +432,7 @@ async function navigateToCar() {
         // Подгоняем карту под маршрут
         map.fitBounds(routeControl.getBounds(), {padding: [50, 50]});
 
-        // Создаем универсальную ссылку для навигации
+        // С��здаем универсальную ссылку для навигации
         const universalUrl = `geo:${endPoint[0]},${endPoint[1]}?q=${endPoint[0]},${endPoint[1]}(Моя машина)`;
 
         // Создаем кнопку навигации
@@ -497,14 +497,13 @@ async function navigateToCar() {
                 {
                     name: 'Apple Maps',
                     icon: '🗺️',
-                    url: `maps://maps.apple.com/?dirflg=w&saddr=${startPoint[0]},${startPoint[1]}&daddr=${endPoint[0]},${endPoint[1]}`,
+                    url: `maps://?daddr=${endPoint[0]},${endPoint[1]}`,
                     platform: 'ios'
                 },
                 {
                     name: 'Яндекс.Карты',
                     icon: '📍',
-                    url: `yandexmaps://maps.yandex.ru/?rtext=${startPoint[0]},${startPoint[1]}~${endPoint[0]},${endPoint[1]}&rtt=pd`,
-                    webUrl: `https://yandex.ru/maps/?rtext=${startPoint[0]},${startPoint[1]}~${endPoint[0]},${endPoint[1]}&rtt=pd`
+                    url: `yandexmaps://maps.yandex.ru/?rtext=${startPoint[0]},${startPoint[1]}~${endPoint[0]},${endPoint[1]}&rtt=pd`
                 },
                 {
                     name: 'Яндекс.Навигатор',
@@ -514,8 +513,7 @@ async function navigateToCar() {
                 {
                     name: '2ГИС',
                     icon: '🌍',
-                    url: `dgis://2gis.ru/routeSearch/rsType/car/from/${startPoint[1]},${startPoint[0]}/to/${endPoint[1]},${endPoint[0]}`,
-                    webUrl: `https://2gis.ru/routeSearch/rsType/car/from/${startPoint[1]},${startPoint[0]}/to/${endPoint[1]},${endPoint[0]}`
+                    url: `dgis://2gis.ru/routeSearch/rsType/car/from/${startPoint[1]},${startPoint[0]}/to/${endPoint[1]},${endPoint[0]}`
                 }
             ];
 
@@ -550,13 +548,6 @@ async function navigateToCar() {
                 button.addEventListener('click', () => {
                     // Пробуем открыть приложение
                     window.location.href = nav.url;
-                    
-                    // Если есть веб-версия, открываем её через 2 секунды, если приложение не открылось
-                    if (nav.webUrl) {
-                        setTimeout(() => {
-                            window.location.href = nav.webUrl;
-                        }, 2000);
-                    }
                     
                     // Закрываем меню
                     menuContainer.style.transform = 'translateY(100%)';
