@@ -399,207 +399,21 @@ async function navigateToCar() {
         const startPoint = [position.coords.latitude, position.coords.longitude];
         const endPoint = [parkedLocation.lat, parkedLocation.lng];
 
-        // Переключаемся на страницу карты
-        switchPage('mapPage');
+        // Создаем URL для Яндекс.Карт
+        // rtext - координаты начальной и конечной точки маршрута
+        // rtt=pd - пешеходный маршрут
+        const yandexMapsUrl = `yandexmaps://maps.yandex.ru/?rtext=${startPoint[0]},${startPoint[1]}~${endPoint[0]},${endPoint[1]}&rtt=pd`;
+        
+        // Запасной вариант - веб-версия Яндекс.Карт
+        const webYandexMapsUrl = `https://yandex.ru/maps/?rtext=${startPoint[0]},${startPoint[1]}~${endPoint[0]},${endPoint[1]}&rtt=pd`;
 
-        // Рисуем линию маршрута на карте
-        if (routeControl) {
-            map.removeLayer(routeControl);
-        }
+        // Пробуем открыть приложение Яндекс.Карт
+        window.location.href = yandexMapsUrl;
 
-        // Добавляем маркеры начала и конца маршрута
-        const startIcon = L.icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41]
-        });
-
-        const endIcon = L.icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41]
-        });
-
-        const startMarker = L.marker([startPoint[0], startPoint[1]], {icon: startIcon}).addTo(map);
-        const endMarker = L.marker([endPoint[0], endPoint[1]], {icon: endIcon}).addTo(map);
-
-        // Рисуем прямую линию между точками
-        routeControl = L.polyline([
-            [startPoint[0], startPoint[1]],
-            [endPoint[0], endPoint[1]]
-        ], {color: '#7B61FF', weight: 6}).addTo(map);
-
-        // Подгоняем карту под маршрут
-        map.fitBounds(routeControl.getBounds(), {padding: [50, 50]});
-
-        // С��здаем универсальную ссылку для навигации
-        const universalUrl = `geo:${endPoint[0]},${endPoint[1]}?q=${endPoint[0]},${endPoint[1]}(Моя машина)`;
-
-        // Создаем кнопку навигации
-        const navButton = document.createElement('button');
-        navButton.className = 'navigation-btn modern';
-        navButton.innerHTML = '🗺️ Открыть навигацию';
-        navButton.style.cssText = `
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 400px;
-            background: #4CAF50;
-            color: white;
-            padding: 16px 24px;
-            border-radius: 24px;
-            border: none;
-            font-size: 16px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            cursor: pointer;
-            z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        `;
-
-        // Обновляем обработчик для кнопки навигации
-        navButton.addEventListener('click', () => {
-            // Создаем контейнер для меню выбора навигатора
-            const menuContainer = document.createElement('div');
-            menuContainer.className = 'nav-menu modern';
-            menuContainer.style.cssText = `
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background: rgba(30, 30, 30, 0.95);
-                backdrop-filter: blur(10px);
-                padding: 20px;
-                border-radius: 20px 20px 0 0;
-                z-index: 1001;
-                transform: translateY(100%);
-                transition: transform 0.3s ease;
-            `;
-
-            // Создаем заголовок
-            const title = document.createElement('div');
-            title.style.cssText = `
-                text-align: center;
-                font-size: 18px;
-                font-weight: 600;
-                margin-bottom: 20px;
-                color: white;
-            `;
-            title.textContent = 'Выберите навигатор';
-
-            // Создаем список навигаторов
-            const navigators = [
-                {
-                    name: 'Apple Maps',
-                    icon: '🗺️',
-                    url: `maps://?daddr=${endPoint[0]},${endPoint[1]}`,
-                    platform: 'ios'
-                },
-                {
-                    name: 'Яндекс.Карты',
-                    icon: '📍',
-                    url: `yandexmaps://maps.yandex.ru/?rtext=${startPoint[0]},${startPoint[1]}~${endPoint[0]},${endPoint[1]}&rtt=pd`
-                },
-                {
-                    name: 'Яндекс.Навигатор',
-                    icon: '🚗',
-                    url: `yandexnavi://build_route_on_map?lat_to=${endPoint[0]}&lon_to=${endPoint[1]}&lat_from=${startPoint[0]}&lon_from=${startPoint[1]}`
-                },
-                {
-                    name: '2ГИС',
-                    icon: '🌍',
-                    url: `dgis://2gis.ru/routeSearch/rsType/car/from/${startPoint[1]},${startPoint[0]}/to/${endPoint[1]},${endPoint[0]}`
-                }
-            ];
-
-            // Создаем кнопки для каждого навигатора
-            const buttonsList = document.createElement('div');
-            buttonsList.style.cssText = `
-                display: flex;
-                flex-direction: column;
-                gap: 12px;
-            `;
-
-            navigators.forEach(nav => {
-                const button = document.createElement('button');
-                button.className = 'nav-option modern';
-                button.style.cssText = `
-                    width: 100%;
-                    padding: 16px;
-                    border: none;
-                    background: rgba(255, 255, 255, 0.1);
-                    color: white;
-                    font-size: 16px;
-                    font-weight: 500;
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    border-radius: 12px;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                `;
-                button.innerHTML = `${nav.icon} ${nav.name}`;
-                
-                button.addEventListener('click', () => {
-                    // Пробуем открыть приложение
-                    window.location.href = nav.url;
-                    
-                    // Закрываем меню
-                    menuContainer.style.transform = 'translateY(100%)';
-                    setTimeout(() => menuContainer.remove(), 300);
-                });
-
-                buttonsList.appendChild(button);
-            });
-
-            // Добавляем кнопку закрытия
-            const closeButton = document.createElement('button');
-            closeButton.className = 'close-nav-menu modern';
-            closeButton.style.cssText = `
-                width: 100%;
-                padding: 16px;
-                border: none;
-                background: rgba(255, 0, 0, 0.2);
-                color: white;
-                font-size: 16px;
-                font-weight: 500;
-                border-radius: 12px;
-                margin-top: 12px;
-                cursor: pointer;
-            `;
-            closeButton.textContent = 'Закрыть';
-            closeButton.onclick = () => {
-                menuContainer.style.transform = 'translateY(100%)';
-                setTimeout(() => menuContainer.remove(), 300);
-            };
-
-            // Собираем меню
-            menuContainer.appendChild(title);
-            menuContainer.appendChild(buttonsList);
-            menuContainer.appendChild(closeButton);
-
-            // Добавляем меню на страницу
-            document.body.appendChild(menuContainer);
-
-            // Показываем меню с анимацией
-            requestAnimationFrame(() => {
-                menuContainer.style.transform = 'translateY(0)';
-            });
-        });
-
-        // Удаляем старую кнопку навигации, если она есть
-        const oldButton = document.querySelector('.navigation-btn');
-        if (oldButton) {
-            oldButton.remove();
-        }
-
-        // Добавляем новую кнопку
-        document.getElementById('mapPage').appendChild(navButton);
+        // Если через 2 секунды приложение не открылось, открываем веб-версию
+        setTimeout(() => {
+            window.location.href = webYandexMapsUrl;
+        }, 2000);
 
         // Показываем информацию о маршруте
         const distance = calculateDistance(startPoint, endPoint);
@@ -609,7 +423,7 @@ async function navigateToCar() {
             `🚗 Машина найдена!\n` +
             `📍 Расстояние: ${(distance/1000).toFixed(1)} км\n` +
             `⏱ Время пешком: ${walkingTime} мин\n\n` +
-            `Нажмите "Открыть навигацию" для построения маршрута`
+            `Открываю Яндекс.Карты...`
         );
 
     } catch (error) {
