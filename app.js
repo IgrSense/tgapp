@@ -270,6 +270,21 @@ function toggleParking() {
         if (currentLocation.lat && currentLocation.lng) {
             parkedLocation = {...currentLocation};
             addMarker([parkedLocation.lat, parkedLocation.lng]);
+            
+            // Добавляем новую запись в историю
+            const newHistoryEntry = {
+                date: new Date().toISOString().split('T')[0],
+                time: new Date().toTimeString().split(' ')[0].slice(0, 5),
+                location: 'Текущая локация',
+                duration: '0 мин',
+                cost: '$0.00',
+                paid: false,
+                coordinates: { // Сохраняем координаты
+                    lat: parkedLocation.lat,
+                    lng: parkedLocation.lng
+                }
+            };
+            mockData.history.unshift(newHistoryEntry);
         }
         
         // Запускаем обновление статистики
@@ -289,6 +304,13 @@ function toggleParking() {
         if (carMarker) {
             map.removeLayer(carMarker);
             miniMap.removeLayer(carMarker);
+        }
+        
+        // При завершении парковки обновляем последнюю запись
+        if (mockData.history.length > 0) {
+            const lastEntry = mockData.history[0];
+            lastEntry.duration = `${currentStats.driveTime}мин`;
+            lastEntry.cost = `$${currentStats.money.toFixed(2)}`;
         }
     }
 }
@@ -432,7 +454,7 @@ async function navigateToCar() {
         // Подгоняем карту под маршрут
         map.fitBounds(routeControl.getBounds(), {padding: [50, 50]});
 
-        // С��даем универсальную ссылку для навигации
+        // Сдаем универсальную ссылку для навигации
         const universalUrl = `geo:${endPoint[0]},${endPoint[1]}?q=${endPoint[0]},${endPoint[1]}(Моя машина)`;
 
         // Создаем кнопку навигации
@@ -653,6 +675,11 @@ function renderHistory() {
                 <p class="history-duration">⏱ ${item.duration}</p>
             </div>
             <div class="history-actions">
+                ${item.coordinates ? `
+                    <button class="history-btn route" onclick="buildRouteFromHistory(${item.coordinates.lat}, ${item.coordinates.lng})">
+                        🗺️ Маршрут
+                    </button>
+                ` : ''}
                 ${item.paid 
                     ? '<button class="history-btn paid">✓ Оплачено</button>'
                     : '<button class="history-btn pay" onclick="payHistoryItem(this)">Оплатить</button>'
@@ -701,4 +728,68 @@ function payHistoryItem(button) {
     setTimeout(() => {
         button.closest('.history-item').classList.remove('animate__animated', 'animate__pulse');
     }, 1000);
+}
+
+// Добавляем новую функцию для построения маршрута из истории
+async function buildRouteFromHistory(lat, lng) {
+    try {
+        // Получаем текущую геопозицию
+        const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            });
+        });
+
+        // Переключаемся на страницу карты
+        switchPage('mapPage');
+
+        // Координаты
+        const startPoint = [position.coords.latitude, position.coords.longitude];
+        const endPoint = [lat, lng];
+
+        // Рисуем маршрут
+        if (routeControl) {
+            map.removeLayer(routeControl);
+        }
+
+        // Добавляем маркеры
+        const startIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41]
+        });
+
+        const endIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41]
+        });
+
+        const startMarker = L.marker([startPoint[0], startPoint[1]], {icon: startIcon}).addTo(map);
+        const endMarker = L.marker([endPoint[0], endPoint[1]], {icon: endIcon}).addTo(map);
+
+        // Рисуем линию маршрута
+        routeControl = L.polyline([
+            [startPoint[0], startPoint[1]],
+            [endPoint[0], endPoint[1]]
+        ], {color: '#7B61FF', weight: 6}).addTo(map);
+
+        // Подгоняем карту под маршрут
+        map.fitBounds(routeControl.getBounds(), {padding: [50, 50]});
+
+        // Показываем информацию о маршруте
+        const distance = calculateDistance(startPoint, endPoint);
+        const walkingTime = Math.round(distance / 80);
+        
+        tg.showAlert(
+            `📍 Расстояние: ${(distance/1000).toFixed(1)} км\n` +
+            `⏱ Время пешком: ${walkingTime} мин`
+        );
+
+    } catch (error) {
+        console.error('Ошибка построения маршрута:', error);
+        tg.showAlert('Ошибка построения маршрута: ' + error.message);
+    }
 } 
