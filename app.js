@@ -352,3 +352,110 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 }); 
+
+// Обновляем функцию навигации к машине
+async function navigateToCar() {
+    if (!parkedLocation) {
+        tg.showAlert('Локация машины не сохранена');
+        return;
+    }
+
+    try {
+        // Получаем текущую геопозицию
+        const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            });
+        });
+
+        // Координаты текущего положения и машины
+        const startPoint = [position.coords.latitude, position.coords.longitude];
+        const endPoint = [parkedLocation.lat, parkedLocation.lng];
+
+        // Переключаемся на страницу карты
+        switchPage('mapPage');
+
+        // Строим маршрут
+        await buildRoute(startPoint, endPoint);
+
+        // Добавляем кнопку для открытия навигации в Google Maps или Яндекс.Навигаторе
+        const navigationUrl = `https://www.google.com/maps/dir/?api=1&origin=${startPoint[0]},${startPoint[1]}&destination=${endPoint[0]},${endPoint[1]}&travelmode=walking`;
+        const yandexUrl = `yandexnavi://build_route_on_map?lat_to=${endPoint[0]}&lon_to=${endPoint[1]}`;
+
+        // Создаем кнопки навигации, если их еще нет
+        let navButtons = document.getElementById('navigationButtons');
+        if (!navButtons) {
+            navButtons = document.createElement('div');
+            navButtons.id = 'navigationButtons';
+            navButtons.style.cssText = `
+                position: fixed;
+                bottom: 80px;
+                left: 50%;
+                transform: translateX(-50%);
+                display: flex;
+                gap: 10px;
+                z-index: 1000;
+            `;
+            
+            const googleButton = document.createElement('a');
+            googleButton.href = navigationUrl;
+            googleButton.target = '_blank';
+            googleButton.className = 'navigation-btn modern';
+            googleButton.innerHTML = '🗺️ Google Maps';
+            googleButton.style.cssText = `
+                background: #4CAF50;
+                color: white;
+                padding: 12px 24px;
+                border-radius: 24px;
+                text-decoration: none;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            `;
+
+            const yandexButton = document.createElement('a');
+            yandexButton.href = yandexUrl;
+            yandexButton.className = 'navigation-btn modern';
+            yandexButton.innerHTML = '🚶‍♂️ Яндекс.Навигатор';
+            yandexButton.style.cssText = googleButton.style.cssText;
+            yandexButton.style.background = '#FF4B4B';
+
+            navButtons.appendChild(googleButton);
+            navButtons.appendChild(yandexButton);
+            document.getElementById('mapPage').appendChild(navButtons);
+        }
+
+        // Показываем информацию о маршруте
+        const distance = await calculateDistance(startPoint, endPoint);
+        tg.showAlert(
+            `🚗 Машина найдена!\n` +
+            `📍 Расстояние: ${(distance/1000).toFixed(1)} км\n` +
+            `⏱ Примерное время пешком: ${Math.round(distance/80)} мин\n\n` +
+            `Нажмите на кнопку навигации для построения маршрута`
+        );
+
+    } catch (error) {
+        console.error('Ошибка навигации:', error);
+        tg.showAlert('Ошибка получения маршрута: ' + error.message);
+    }
+}
+
+// Добавляем функцию расчета расстояния
+function calculateDistance(start, end) {
+    const R = 6371e3; // радиус Земли в метрах
+    const φ1 = start[0] * Math.PI/180;
+    const φ2 = end[0] * Math.PI/180;
+    const Δφ = (end[0]-start[0]) * Math.PI/180;
+    const Δλ = (end[1]-start[1]) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c; // расстояние в метрах
+} 
