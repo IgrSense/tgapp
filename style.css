@@ -598,33 +598,44 @@ body.fullscreen {
 }
 
 .car-card.modern {
-    padding: 16px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 24px;
     margin: 16px 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 16px;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
 }
 
 .car-card.modern .car-image {
-    width: 120px;
-    height: 80px;
+    width: 100%;
+    height: 200px;
     object-fit: contain;
-    border-radius: 12px;
+    transform: scale(1.1);
+    margin: -20px 0;
 }
 
 .car-card.modern .car-info {
-    flex: 1;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .car-card.modern h3 {
-    margin: 0 0 4px 0;
-    font-size: 18px;
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
 }
 
 .car-card.modern .price {
-    margin: 0;
+    font-size: 20px;
     color: #7B61FF;
     font-weight: 600;
+    margin: 0;
 }
 
 .stats-card.modern {
@@ -700,4 +711,168 @@ body.fullscreen {
 .nav-btn.active {
     background: #7B61FF;
     transform: translateY(-8px);
+}
+
+/* Добавляем стили для кнопки парковки */
+.park-btn {
+    width: 100%;
+    padding: 16px;
+    margin-top: 16px;
+    border: none;
+    background: #7B61FF;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.park-btn:active {
+    transform: scale(0.98);
+}
+
+.park-btn.active {
+    background: #FF4B4B;
+}
+
+/* Добавляем анимацию для чисел */
+.stat h3.animated {
+    animation: numberChange 0.3s ease-out;
+}
+
+@keyframes numberChange {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Добавляем стили для истории */
+.history-filters {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.filter-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    color: var(--tg-theme-text-color);
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+.filter-btn.active {
+    background: #7B61FF;
+    color: white;
+}
+
+.history-item {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 16px;
+    animation: slideIn 0.3s ease-out;
+}
+
+.history-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.history-date h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.history-date p {
+    margin: 4px 0 0;
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+.history-cost {
+    font-size: 18px;
+    font-weight: 600;
+    color: #7B61FF;
+}
+
+.history-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.history-location {
+    font-size: 15px;
+    margin: 0;
+}
+
+.history-duration {
+    font-size: 14px;
+    opacity: 0.7;
+    margin: 0;
+}
+
+.history-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.history-btn {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.history-btn.pay {
+    background: #7B61FF;
+    color: white;
+}
+
+.history-btn.paid {
+    background: #4CAF50;
+    color: white;
+    cursor: default;
+}
+
+/* Добавляем стили для кнопки навигации */
+.navigate-btn {
+    width: 100%;
+    padding: 16px;
+    margin-top: 8px;
+    border: none;
+    background: #4CAF50;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 16px;
+}
+
+.navigate-btn:active {
+    transform: scale(0.98);
 } 

@@ -5,6 +5,31 @@ tg.expand();
 console.log('Доступные методы WebApp:', Object.keys(tg));
 console.log('Версия WebApp:', tg.version);
 
+// Обновляем стили для анимации (добавляем в начало файла после объявления tg)
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes pulse {
+        0% { 
+            transform: scale(1);
+            color: rgba(255, 255, 255, 0.7);
+        }
+        50% { 
+            transform: scale(1.2);
+            color: rgba(255, 255, 255, 1);
+        }
+        100% { 
+            transform: scale(1);
+            color: rgba(255, 255, 255, 0.7);
+        }
+    }
+
+    .stat h3.pulse {
+        animation: pulse 0.3s ease-in-out;
+        transform-origin: center;
+    }
+`;
+document.head.appendChild(style);
+
 // Функции для работы с localStorage
 function saveToLocalStorage(key, value) {
     try {
@@ -93,7 +118,7 @@ function switchPage(pageId) {
     }
 }
 
-// Добавляем моковые данные
+// Обновляем моковые данные
 const mockData = {
     history: [
         {
@@ -101,21 +126,24 @@ const mockData = {
             time: '14:30',
             location: 'Shopping Mall',
             duration: '2h 15m',
-            cost: '$45.00'
+            cost: '$45.00',
+            paid: false
         },
         {
             date: '2024-03-15',
             time: '10:15',
             location: 'City Center',
             duration: '1h 30m',
-            cost: '$32.50'
+            cost: '$32.50',
+            paid: true
         },
         {
             date: '2024-03-14',
             time: '19:45',
             location: 'Airport',
             duration: '3h 00m',
-            cost: '$67.00'
+            cost: '$67.00',
+            paid: true
         }
     ],
     profile: {
@@ -129,7 +157,7 @@ const mockData = {
     }
 };
 
-// Функция для отображения истории
+// Обновляем функцию отображения истории
 function renderHistory() {
     const historyList = document.getElementById('historyList');
     if (!historyList) return;
@@ -144,11 +172,58 @@ function renderHistory() {
                 <div class="history-cost">${item.cost}</div>
             </div>
             <div class="history-details">
-                <p class="history-location">${item.location}</p>
-                <p class="history-duration">${item.duration}</p>
+                <p class="history-location">📍 ${item.location}</p>
+                <p class="history-duration">⏱ ${item.duration}</p>
+            </div>
+            <div class="history-actions">
+                ${item.paid 
+                    ? '<button class="history-btn paid">✓ Оплачено</button>'
+                    : '<button class="history-btn pay" onclick="payHistoryItem(this)">Оплатить</button>'
+                }
             </div>
         </div>
     `).join('');
+
+    // Добавляем обработчики для фильтров
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            filterHistory(e.target.textContent.toLowerCase());
+        });
+    });
+}
+
+// Добавляем функцию фильтрации
+function filterHistory(filter) {
+    const items = document.querySelectorAll('.history-item');
+    items.forEach(item => {
+        const isPaid = item.querySelector('.history-btn.paid') !== null;
+        switch(filter) {
+            case 'paid':
+                item.style.display = isPaid ? 'block' : 'none';
+                break;
+            case 'unpaid':
+                item.style.display = !isPaid ? 'block' : 'none';
+                break;
+            default:
+                item.style.display = 'block';
+        }
+    });
+}
+
+// Добавляем функцию оплаты
+function payHistoryItem(button) {
+    button.classList.remove('pay');
+    button.classList.add('paid');
+    button.textContent = '✓ Оплачено';
+    button.onclick = null;
+    
+    // Анимация
+    button.closest('.history-item').classList.add('animate__animated', 'animate__pulse');
+    setTimeout(() => {
+        button.closest('.history-item').classList.remove('animate__animated', 'animate__pulse');
+    }, 1000);
 }
 
 // Функция для отображения профиля
@@ -179,7 +254,191 @@ function renderProfile() {
     `;
 }
 
-// Обновляем обработчики навигации
+// Добавляем переменные для отслеживания парковки на глобальном уровне
+let isParked = false;
+let parkingStartTime = null;
+let parkingInterval = null;
+let currentStats = {
+    distance: 57,
+    driveTime: 43,
+    money: 324
+};
+
+// Обновляем функцию анимации чисел
+function animateNumber(element, value) {
+    if (!element) return;
+    
+    // Удаляем предыдущий класс анимации
+    element.classList.remove('pulse');
+    
+    // Обновляем значение
+    element.textContent = value;
+    
+    // Форсируем перерисовку
+    void element.offsetWidth;
+    
+    // Добавляем анимацию
+    element.classList.add('pulse');
+    
+    // Удаляем класс после завершения анимации
+    setTimeout(() => {
+        element.classList.remove('pulse');
+    }, 300);
+}
+
+// Обновляем функцию обновления статистики
+function updateStats() {
+    if (!isParked) return;
+
+    const now = new Date();
+    const timeDiff = (now - parkingStartTime) / 1000; // разница в секундах
+
+    // Обновляем расстояние (случайное изменение)
+    currentStats.distance += Math.random() * 0.1;
+    const distanceElement = document.querySelector('.stats-card.modern .stat:nth-child(1) h3');
+    if (distanceElement) {
+        animateNumber(distanceElement, `${Math.round(currentStats.distance)}km`);
+    }
+
+    // Обновляем время
+    currentStats.driveTime = Math.floor(timeDiff / 60);
+    const timeElement = document.querySelector('.stats-card.modern .stat:nth-child(2) h3');
+    if (timeElement) {
+        animateNumber(timeElement, `${currentStats.driveTime}min`);
+    }
+
+    // Обновляем деньги (1 цент в секунду)
+    currentStats.money += 0.01;
+    const moneyElement = document.querySelector('.stats-card.modern .stat:nth-child(3) h3');
+    if (moneyElement) {
+        animateNumber(moneyElement, `$${currentStats.money.toFixed(2)}`);
+    }
+}
+
+// Обновляем начальные значения
+function initializeStats() {
+    const distanceElement = document.querySelector('.stats-card.modern .stat:nth-child(1) h3');
+    const timeElement = document.querySelector('.stats-card.modern .stat:nth-child(2) h3');
+    const moneyElement = document.querySelector('.stats-card.modern .stat:nth-child(3) h3');
+
+    if (distanceElement) distanceElement.textContent = `${Math.round(currentStats.distance)}km`;
+    if (timeElement) timeElement.textContent = `${currentStats.driveTime}min`;
+    if (moneyElement) moneyElement.textContent = `$${currentStats.money.toFixed(2)}`;
+}
+
+// Вызываем инициализацию при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    initializeStats();
+    // ... остальной код ...
+});
+
+// Обновляем функцию toggleParking
+function toggleParking() {
+    const parkBtn = document.getElementById('parkBtn');
+    const navigateBtn = document.getElementById('navigateBtn');
+    
+    if (!isParked) {
+        // Начинаем парковку
+        isParked = true;
+        parkingStartTime = new Date();
+        parkBtn.classList.add('active');
+        parkBtn.querySelector('.text').textContent = 'Завершить парковку';
+        
+        // Показываем кнопку навигации
+        if (navigateBtn) {
+            navigateBtn.style.display = 'flex';
+        }
+        
+        // Запускаем интервал обновления статистики
+        if (parkingInterval) clearInterval(parkingInterval);
+        parkingInterval = setInterval(updateStats, 1000);
+        
+        // Сохраняем локацию парковки
+        if (currentLocation.lat && currentLocation.lng) {
+            parkedLocation = {...currentLocation};
+            
+            // Добавляем маркер на карты
+            addMarker([parkedLocation.lat, parkedLocation.lng]);
+            
+            // Центрируем мини-карту на месте парковки
+            if (miniMap) {
+                miniMap.setCenter([parkedLocation.lat, parkedLocation.lng]);
+            }
+            
+            // Отправляем данные в Telegram
+            const data = {
+                type: 'car_location',
+                location: parkedLocation,
+                parkingStartTime: parkingStartTime.toISOString()
+            };
+            tg.sendData(JSON.stringify(data));
+            
+            // Показываем уведомление
+            tg.showAlert('Локация машины сохранена!');
+        } else {
+            tg.showAlert('Не удалось получить текущую локацию. Пожалуйста, разрешите доступ к геолокации.');
+        }
+    } else {
+        // Завершаем парковку
+        isParked = false;
+        clearInterval(parkingInterval);
+        parkBtn.classList.remove('active');
+        parkBtn.querySelector('.text').textContent = 'Припарковаться';
+        
+        // Скрываем кнопку навигации
+        if (navigateBtn) {
+            navigateBtn.style.display = 'none';
+        }
+        
+        // Очищаем локацию парковки
+        parkedLocation = null;
+        
+        // Удаляем маркер с карт
+        if (carMarker) {
+            map.geoObjects.remove(carMarker);
+            miniMap.geoObjects.remove(carMarker);
+        }
+        
+        // Добавляем запись в историю
+        const historyEntry = {
+            date: new Date().toISOString().split('T')[0],
+            time: new Date().toTimeString().split(' ')[0].slice(0, 5),
+            location: 'Current Location',
+            duration: `${currentStats.driveTime}min`,
+            cost: `$${currentStats.money.toFixed(2)}`,
+            paid: false
+        };
+        mockData.history.unshift(historyEntry);
+        
+        // Если открыта страница истории, обновляем её
+        if (document.getElementById('historyPage').classList.contains('active')) {
+            renderHistory();
+        }
+    }
+}
+
+// Добавляем функцию навигации к машине
+function navigateToCar() {
+    if (!parkedLocation) {
+        tg.showAlert('Локация машины не сохранена');
+        return;
+    }
+    
+    // Переключаемся на страницу карты
+    switchPage('mapPage');
+    
+    // Центрируем карту на месте парковки
+    if (map) {
+        map.setCenter([parkedLocation.lat, parkedLocation.lng], 16);
+    }
+    
+    // Обновляем активную вкладку в навигации
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === 'map');
+    });
+}
+
+// В обработчике DOMContentLoaded оставляем только привязку обработчиков событий
 document.addEventListener('DOMContentLoaded', () => {
     // Проверяем наличие элементов перед добавлением обработчиков
     const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -267,6 +526,192 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // Добавляем переменные для отслеживания парковки
+    let isParked = false;
+    let parkingStartTime = null;
+    let parkingInterval = null;
+    let currentStats = {
+        distance: 57,
+        driveTime: 43,
+        money: 324
+    };
+
+    // Функция для анимированного обновления числа
+    function animateNumber(element, value) {
+        element.textContent = value;
+        element.classList.add('animated');
+        setTimeout(() => element.classList.remove('animated'), 300);
+    }
+
+    // Функция обновления статистики
+    function updateStats() {
+        if (!isParked) return;
+
+        const now = new Date();
+        const timeDiff = (now - parkingStartTime) / 1000; // разница в секундах
+
+        // Обновляем расстояние (случайное изменение)
+        currentStats.distance += Math.random() * 0.1;
+        animateNumber(
+            document.querySelector('.stats-card .stat:nth-child(1) h3'),
+            `${Math.round(currentStats.distance)}km`
+        );
+
+        // Обновляем время
+        currentStats.driveTime = Math.floor(timeDiff / 60);
+        animateNumber(
+            document.querySelector('.stats-card .stat:nth-child(2) h3'),
+            `${currentStats.driveTime}min`
+        );
+
+        // Обновляем деньги (1 цент в секунду)
+        currentStats.money += 0.01;
+        animateNumber(
+            document.querySelector('.stats-card .stat:nth-child(3) h3'),
+            `$${currentStats.money.toFixed(2)}`
+        );
+    }
+
+    // Добавляем переменную для хранения локации парковки
+    let parkedLocation = null;
+
+    // Обновляем функцию toggleParking
+    function toggleParking() {
+        const parkBtn = document.getElementById('parkBtn');
+        const navigateBtn = document.getElementById('navigateBtn');
+        
+        if (!isParked) {
+            // Начинаем парковку
+            isParked = true;
+            parkingStartTime = new Date();
+            parkBtn.classList.add('active');
+            parkBtn.querySelector('.text').textContent = 'Завершить парковку';
+            
+            // Сохраняем локацию парковки
+            if (currentLocation.lat && currentLocation.lng) {
+                parkedLocation = {...currentLocation};
+                
+                // Показываем кнопку навигации
+                if (navigateBtn) {
+                    navigateBtn.style.display = 'flex';
+                    // Добавляем обработчик для кнопки навигации, если его еще нет
+                    if (!navigateBtn.onclick) {
+                        navigateBtn.onclick = navigateToCar;
+                    }
+                }
+                
+                // Добавляем маркер на карты
+                addMarker([parkedLocation.lat, parkedLocation.lng]);
+                
+                // Центрируем мини-карту на месте парковки
+                if (miniMap) {
+                    miniMap.setCenter([parkedLocation.lat, parkedLocation.lng]);
+                }
+                
+                // Отправляем данные в Telegram
+                const data = {
+                    type: 'car_location',
+                    location: parkedLocation,
+                    parkingStartTime: parkingStartTime.toISOString()
+                };
+                tg.sendData(JSON.stringify(data));
+                
+                // Показываем уведомление
+                tg.showAlert('Локация машины сохранена!');
+                
+                // Запускаем интервал обновления статистики
+                parkingInterval = setInterval(updateStats, 1000);
+            } else {
+                tg.showAlert('Не удалось получить текущую локацию. Пожалуйста, разрешите доступ к геолокации.');
+            }
+        } else {
+            // Завершаем парковку
+            isParked = false;
+            clearInterval(parkingInterval);
+            parkBtn.classList.remove('active');
+            parkBtn.querySelector('.text').textContent = 'Припарковаться';
+            
+            // Скрываем кнопку навигации
+            if (navigateBtn) {
+                navigateBtn.style.display = 'none';
+            }
+            
+            // Очищаем локацию парковки
+            parkedLocation = null;
+            
+            // Удаляем маркер с карт
+            if (carMarker) {
+                map.geoObjects.remove(carMarker);
+                miniMap.geoObjects.remove(carMarker);
+            }
+            
+            // Добавляем запись в историю
+            const historyEntry = {
+                date: new Date().toISOString().split('T')[0],
+                time: new Date().toTimeString().split(' ')[0].slice(0, 5),
+                location: 'Current Location',
+                duration: `${currentStats.driveTime}min`,
+                cost: `$${currentStats.money.toFixed(2)}`,
+                paid: false
+            };
+            mockData.history.unshift(historyEntry);
+            
+            // Если открыта страница истории, обновляем её
+            if (document.getElementById('historyPage').classList.contains('active')) {
+                renderHistory();
+            }
+        }
+    }
+
+    // Добавляем функцию навигации к машине
+    function navigateToCar() {
+        if (!parkedLocation) {
+            tg.showAlert('Локация машины не сохранена');
+            return;
+        }
+        
+        // Переключаемся на страницу карты
+        switchPage('mapPage');
+        
+        // Центрируем карту на месте парковки
+        if (map) {
+            map.setCenter([parkedLocation.lat, parkedLocation.lng], 16);
+        }
+        
+        // Обновляем активную вкладку в навигации
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === 'map');
+        });
+    }
+
+    // Добавляем обработчики в DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+        // ... существующий код ...
+
+        // Добавляем обработчик для кнопки навигации
+        const navigateBtn = document.getElementById('navigateBtn');
+        if (navigateBtn) {
+            navigateBtn.addEventListener('click', navigateToCar);
+        }
+        
+        // Обновляем моковые данные пользователя
+        mockData.profile = {
+            name: 'Игорь',
+            avatar: 'https://i.imgur.com/user-avatar.jpg',
+            stats: {
+                totalTrips: 42,
+                totalDistance: '1,250 km',
+                totalTime: '83h'
+            }
+        };
+    });
+
+    // Добавляем обработчик для кнопки парковки
+    const parkBtn = document.getElementById('parkBtn');
+    if (parkBtn) {
+        parkBtn.addEventListener('click', toggleParking);
+    }
 });
 
 // Функция обновления safe areas
@@ -337,21 +782,33 @@ function initMaps() {
 // Получение геолокации
 function getCurrentLocation() {
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(position => {
-            currentLocation.lat = position.coords.latitude;
-            currentLocation.lng = position.coords.longitude;
-            
-            const coords = [currentLocation.lat, currentLocation.lng];
-            
-            // Центрируем карты
-            if (map && miniMap) {
-                map.setCenter(coords);
-                miniMap.setCenter(coords);
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                currentLocation.lat = position.coords.latitude;
+                currentLocation.lng = position.coords.longitude;
                 
-                // Добавляем маркер
-                addMarker(coords);
+                const coords = [currentLocation.lat, currentLocation.lng];
+                
+                // Центрируем карты
+                if (map && miniMap) {
+                    map.setCenter(coords);
+                    miniMap.setCenter(coords);
+                    
+                    // Добавляем маркер
+                    addMarker(coords);
+                }
+            },
+            error => {
+                tg.showAlert('Ошибка получения геолокации: ' + error.message);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
             }
-        });
+        );
+    } else {
+        tg.showAlert('Геолокация не поддерживается вашим устройством');
     }
 }
 

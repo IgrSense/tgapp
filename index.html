@@ -28,12 +28,20 @@
             <div class="active-car animate__animated animate__fadeInUp">
                 <h2>Active car</h2>
                 <div class="car-card modern">
-                    <img src="https://i.imgur.com/XyPHxMi.png" alt="Fortuner GR" class="car-image">
+                    <img src="bmw.png" alt="BMW X1" class="car-image modern">
                     <div class="car-info">
-                        <h3>Fortuner GR</h3>
+                        <h3>BMW X1</h3>
                         <p class="price">$45.00/h</p>
                     </div>
                 </div>
+                <button class="park-btn modern" id="parkBtn">
+                    <span class="icon">🅿️</span>
+                    <span class="text">Припарковаться</span>
+                </button>
+                <button class="navigate-btn modern" id="navigateBtn" style="display: none;">
+                    <span class="icon">🗺️</span>
+                    <span class="text">Навигация к машине</span>
+                </button>
             </div>
 
             <div class="stats animate__animated animate__fadeInUp">
@@ -56,9 +64,9 @@
 
             <div class="user-location animate__animated animate__fadeInUp">
                 <div class="user-card modern">
-                    <img src="https://i.imgur.com/jOjPXr9.jpg" alt="User" class="user-avatar">
+                    <img src="https://i.imgur.com/user-avatar.jpg" alt="User" class="user-avatar">
                     <div class="user-info">
-                        <h3>Jane Cooper</h3>
+                        <h3>Игорь</h3>
                         <p class="user-status">Online</p>
                     </div>
                 </div>
@@ -75,6 +83,11 @@
             <header>
                 <h1>History</h1>
             </header>
+            <div class="history-filters">
+                <button class="filter-btn active">All</button>
+                <button class="filter-btn">Paid</button>
+                <button class="filter-btn">Unpaid</button>
+            </div>
             <div class="history-list" id="historyList">
                 <!-- История будет добавлена через JavaScript -->
             </div>
