@@ -224,7 +224,7 @@ function animateNumber(element, value) {
     element.classList.add('pulse');
 }
 
-// Обновляем функцию переключе�� страниц
+// Обновляем функцию переключе страниц
 function switchPage(pageId) {
     // Скрываем все страницы
     document.querySelectorAll('.page').forEach(page => {
@@ -467,15 +467,23 @@ async function navigateToCar() {
             const userAgent = navigator.userAgent.toLowerCase();
             const isIOS = /iphone|ipad|ipod/.test(userAgent);
 
-            // Создаем URL для Apple Maps
-            const appleUrl = `https://maps.apple.com/maps?ll=${endPoint[0]},${endPoint[1]}&q=${endPoint[0]},${endPoint[1]}&t=m`;
+            // Создаем URL для iOS
+            const appleUrl = `maps://maps.apple.com/?dirflg=w&saddr=${startPoint[0]},${startPoint[1]}&daddr=${endPoint[0]},${endPoint[1]}`;
+            
+            // Создаем запасной URL для веб-версии Apple Maps
+            const webAppleUrl = `http://maps.apple.com/?dirflg=w&saddr=${startPoint[0]},${startPoint[1]}&daddr=${endPoint[0]},${endPoint[1]}`;
             
             // Для Android создаем URL для Google Maps
-            const googleUrl = `https://www.google.com/maps/search/?api=1&query=${endPoint[0]},${endPoint[1]}`;
+            const googleUrl = `https://www.google.com/maps/dir/?api=1&origin=${startPoint[0]},${startPoint[1]}&destination=${endPoint[0]},${endPoint[1]}&travelmode=walking`;
 
             // Выбираем URL в зависимости от платформы
             if (isIOS) {
+                // Сначала пробуем открыть нативное приложение
                 window.location.href = appleUrl;
+                // Если через 2 секунды не открылось, пробуем веб-версию
+                setTimeout(() => {
+                    window.location.href = webAppleUrl;
+                }, 2000);
             } else {
                 window.location.href = googleUrl;
             }
