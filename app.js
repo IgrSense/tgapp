@@ -53,25 +53,15 @@ function loadFromLocalStorage(key) {
 // Обновляем функции для работы с полноэкранным режимом и домашним экраном
 async function toggleFullscreen() {
     try {
-        console.log('isFullscreen доступен:', 'isFullscreen' in tg);
-        console.log('requestFullscreen доступен:', 'requestFullscreen' in tg);
-        console.log('exitFullscreen доступен:', 'exitFullscreen' in tg);
-        
-        if (!('requestFullscreen' in tg)) {
-            tg.showAlert("Функция полного экрана пока не поддерживается в этой версии Telegram");
-            return;
-        }
-
         if (!tg.isFullscreen) {
-            tg.showAlert("Включаем полноэкранный режим...");
+            await tg.expand(); // Сначала расширяем окно
             await tg.requestFullscreen();
         } else {
-            tg.showAlert("Выключаем полноэкранный режим...");
             await tg.exitFullscreen();
         }
     } catch (error) {
-        tg.showAlert('Ошибка: ' + error.message);
         console.error('Ошибка переключения полноэкранного режима:', error);
+        tg.showAlert('Ошибка: ' + error.message);
     }
 }
 
@@ -505,7 +495,7 @@ async function navigateToCar() {
     }
 }
 
-// Функция для получения геопозиции через Promise
+// Функция для полу��ения геопозиции через Promise
 function getCurrentPositionPromise() {
     return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
@@ -523,67 +513,60 @@ function getCurrentPositionPromise() {
 
 // Функция построения маршрута
 async function buildRoute(startPoint, endPoint) {
+    if (!ymaps.multiRouter) {
+        tg.showAlert('Ошибка: модуль построения маршрута не загружен');
+        return;
+    }
+
     // Удаляем предыдущий маршрут если есть
     if (routeToCarPath) {
         map.geoObjects.remove(routeToCarPath);
     }
 
-    // Создаем мультимаршрут
-    const multiRoute = new ymaps.multiRouter.MultiRoute({
-        referencePoints: [
-            startPoint,
-            endPoint
-        ],
-        params: {
-            routingMode: 'pedestrian' // пешеходный маршрут
-        }
-    }, {
-        boundsAutoApply: true,
-        routeActiveStrokeWidth: 6,
-        routeActiveStrokeColor: "#7B61FF",
-        routeActiveStrokeStyle: 'solid',
-        routeStrokeWidth: 6,
-        routeStrokeColor: "#7B61FF",
-        routeStrokeStyle: 'solid',
-        pinIconFillColor: "#7B61FF",
-        wayPointStartIconFillColor: "#4CAF50",
-        wayPointFinishIconFillColor: "#FF4B4B",
-        // Внешний вид путевых точек
-        wayPointStartIconColor: "#FFFFFF",
-        wayPointFinishIconColor: "#FFFFFF",
-        // Внешний вид транзитных точек
-        viaPointIconRadius: 7,
-        viaPointIconFillColor: "#7B61FF",
-        viaPointActiveIconFillColor: "#7B61FF",
-        viaPointIconColor: "#FFFFFF",
-        // Транзитные точки можно перетаскивать
-        viaPointDraggable: true,
-        // Позволяет скрыть иконки путевых точек
-        pinVisible: true
-    });
-
-    // Добавляем маршрут на карту
-    map.geoObjects.add(multiRoute);
-    routeToCarPath = multiRoute;
-
-    // Подписываемся на событие готовности маршрута
     return new Promise((resolve, reject) => {
-        multiRoute.model.events.add('requestsuccess', function() {
-            // Получаем первый маршрут
-            const activeRoute = multiRoute.getActiveRoute();
-            if (activeRoute) {
-                // Получаем длину маршрута в метрах
-                const distance = activeRoute.properties.get("distance").text;
-                // Получаем время маршрута в секундах
-                const duration = activeRoute.properties.get("duration").text;
-                
-                // Показываем информацию о маршруте
-                tg.showAlert(`Расстояние до машины: ${distance}\nВремя пешком: ${duration}`);
+        // Создаем мультимаршрут
+        const multiRoute = new ymaps.multiRouter.MultiRoute({
+            referencePoints: [startPoint, endPoint],
+            params: {
+                routingMode: 'pedestrian'
             }
-            resolve();
+        }, {
+            boundsAutoApply: true,
+            routeActiveStrokeWidth: 6,
+            routeActiveStrokeColor: "#7B61FF",
+            routeActiveStrokeStyle: 'solid',
+            routeStrokeWidth: 6,
+            routeStrokeColor: "#7B61FF",
+            routeStrokeStyle: 'solid',
+            pinIconFillColor: "#7B61FF",
+            wayPointStartIconFillColor: "#4CAF50",
+            wayPointFinishIconFillColor: "#FF4B4B",
+            wayPointStartIconColor: "#FFFFFF",
+            wayPointFinishIconColor: "#FFFFFF",
+            viaPointIconRadius: 7,
+            viaPointIconFillColor: "#7B61FF",
+            viaPointActiveIconFillColor: "#7B61FF",
+            viaPointIconColor: "#FFFFFF",
+            viaPointDraggable: true,
+            pinVisible: true
         });
 
-        multiRoute.model.events.add('requestfail', function(error) {
+        // Добавляем маршрут на карту
+        map.geoObjects.add(multiRoute);
+        routeToCarPath = multiRoute;
+
+        // Подписываемся на события
+        multiRoute.model.events.add('requestsuccess', () => {
+            const activeRoute = multiRoute.getActiveRoute();
+            if (activeRoute) {
+                const distance = activeRoute.properties.get("distance").text;
+                const duration = activeRoute.properties.get("duration").text;
+                tg.showAlert(`Расстояние до машины: ${distance}\nВремя пешком: ${duration}`);
+            }
+            resolve(multiRoute);
+        });
+
+        multiRoute.model.events.add('requestfail', (error) => {
             reject(new Error('Не удалось построить маршрут'));
         });
     });
@@ -623,15 +606,36 @@ function initMaps() {
         
     } catch (error) {
         console.error('Ошибка инициализации карт:', error);
+        tg.showAlert('Ошибка инициализации карт: ' + error.message);
     }
 }
 
 // Обновляем загрузку API Яндекс.Карт
 ymaps.ready(() => {
+    // Загружаем необходимые модули
     ymaps.modules.require([
-        'multiRouter.MultiRoute'
-    ], function() {
+        'multiRouter.MultiRoute',
+        'control.SearchControl',
+        'control.ZoomControl',
+        'control.RouteButton'
+    ]).then(function() {
         initMaps();
+        
+        // Обновляем размер карты при переключении на вкладку с картой
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            if (btn.dataset.tab === 'map') {
+                btn.addEventListener('click', () => {
+                    setTimeout(() => {
+                        if (map) {
+                            map.container.fitToViewport();
+                        }
+                    }, 100);
+                });
+            }
+        });
+    }).catch(error => {
+        console.error('Ошибка загрузки модулей Яндекс.Карт:', error);
+        tg.showAlert('Ошибка загрузки карт: ' + error.message);
     });
 });
 
@@ -671,34 +675,6 @@ let currentLocation = {
 let map = null;
 let miniMap = null;
 let carMarker = null;
-
-// Инициализация карт
-function initMaps() {
-    try {
-        // Основная карта
-        map = new ymaps.Map('map', {
-            center: [55.7522, 37.6156], // Москва
-            zoom: 12,
-            controls: ['zoomControl']
-        });
-
-        // Мини-карта
-        miniMap = new ymaps.Map('mini-map', {
-            center: [55.7522, 37.6156],
-            zoom: 12,
-            controls: []
-        });
-
-        // Отключаем зум на мини-карте
-        miniMap.behaviors.disable(['scrollZoom', 'drag']);
-        
-        // Получаем текущую геолокацию
-        getCurrentLocation();
-        
-    } catch (error) {
-        console.error('Ошибка инициализации карт:', error);
-    }
-}
 
 // Получение геолокации
 function getCurrentLocation() {
