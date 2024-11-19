@@ -1,0 +1,33 @@
+:root {
+    --safe-area-top: 0px;
+    --safe-area-bottom: 0px;
+}
+
+body {
+    padding-top: var(--safe-area-top);
+    padding-bottom: var(--safe-area-bottom);
+}
+
+.app-controls {
+    position: fixed;
+    bottom: calc(20px + var(--safe-area-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.control-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background: var(--tg-theme-button-color);
+    color: var(--tg-theme-button-text-color);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.control-btn:active {
+    opacity: 0.8;
+} 
