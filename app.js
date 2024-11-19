@@ -166,46 +166,56 @@ async function buildRoute(startPoint, endPoint) {
     }
 }
 
-// Функция для анимации чисел
+// Добавляем функцию инициализации статистики
+function initializeStats() {
+    const distanceElement = document.querySelector('.stats-card.modern .stat:nth-child(1) h3');
+    const timeElement = document.querySelector('.stats-card.modern .stat:nth-child(2) h3');
+    const moneyElement = document.querySelector('.stats-card.modern .stat:nth-child(3) h3');
+
+    if (distanceElement) distanceElement.textContent = `${Math.round(currentStats.distance)}km`;
+    if (timeElement) timeElement.textContent = `${currentStats.driveTime}min`;
+    if (moneyElement) moneyElement.textContent = `$${currentStats.money.toFixed(2)}`;
+}
+
+// Обновляем функцию для анимации чисел
 function animateNumber(element, value) {
     if (!element) return;
-    element.textContent = value;
+    
+    // Удаляем предыдущую анимацию
     element.classList.remove('pulse');
-    void element.offsetWidth; // Форсируем перерисовку
+    
+    // Обновляем значение
+    element.textContent = value;
+    
+    // Форсируем перерисовку
+    void element.offsetWidth;
+    
+    // Добавляем анимацию
     element.classList.add('pulse');
 }
 
-// Функция обновления статистики
-function updateStats() {
-    if (!isParked) return;
-
-    const now = new Date();
-    const timeDiff = (now - parkingStartTime) / 1000; // разница в секундах
-
-    // Обновляем расстояние (случайное изменение)
-    currentStats.distance += Math.random() * 0.1;
-    const distanceElement = document.querySelector('.stats-card.modern .stat:nth-child(1) h3');
-    animateNumber(distanceElement, `${Math.round(currentStats.distance)}km`);
-
-    // Обновляем время
-    currentStats.driveTime = Math.floor(timeDiff / 60);
-    const timeElement = document.querySelector('.stats-card.modern .stat:nth-child(2) h3');
-    animateNumber(timeElement, `${currentStats.driveTime}min`);
-
-    // Обновляем деньги (1 цент в секунду)
-    currentStats.money += 0.01;
-    const moneyElement = document.querySelector('.stats-card.modern .stat:nth-child(3) h3');
-    animateNumber(moneyElement, `$${currentStats.money.toFixed(2)}`);
-}
-
-// Функция переключения страниц
+// Обновляем функцию переключения страниц
 function switchPage(pageId) {
-    document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-    document.getElementById(pageId).classList.add('active');
+    // Скрываем все страницы
+    document.querySelectorAll('.page').forEach(page => {
+        page.style.display = 'none';
+    });
     
-    // Если открываем карту, обновляем её размер
-    if (pageId === 'mapPage' && map) {
-        setTimeout(() => map.invalidateSize(), 100);
+    // Показываем нужную страницу
+    const currentPage = document.getElementById(pageId);
+    if (currentPage) {
+        currentPage.style.display = 'block';
+        
+        // Если открываем карту, обновляем её размер
+        if (pageId === 'mapPage' && map) {
+            setTimeout(() => {
+                map.invalidateSize();
+                // Если есть сохраненная локация, центрируем карту на ней
+                if (parkedLocation) {
+                    map.setView([parkedLocation.lat, parkedLocation.lng], 16);
+                }
+            }, 100);
+        }
     }
 }
 
@@ -253,19 +263,59 @@ function toggleParking() {
     }
 }
 
-// Инициализация при загрузке страницы
+// Обновляем функцию обновления статистики
+function updateStats() {
+    if (!isParked) return;
+
+    const now = new Date();
+    const timeDiff = (now - parkingStartTime) / 1000; // разница в секундах
+
+    // Обновляем расстояние (случайное изменение)
+    currentStats.distance += Math.random() * 0.1;
+    const distanceElement = document.querySelector('.stats-card.modern .stat:nth-child(1) h3');
+    animateNumber(distanceElement, `${Math.round(currentStats.distance)}km`);
+
+    // Обновляем время
+    currentStats.driveTime = Math.floor(timeDiff / 60);
+    const timeElement = document.querySelector('.stats-card.modern .stat:nth-child(2) h3');
+    animateNumber(timeElement, `${currentStats.driveTime}min`);
+
+    // Обновляем деньги (1 цент в секунду)
+    currentStats.money += 0.01;
+    const moneyElement = document.querySelector('.stats-card.modern .stat:nth-child(3) h3');
+    animateNumber(moneyElement, `$${currentStats.money.toFixed(2)}`);
+}
+
+// Обновляем обработчики событий
 document.addEventListener('DOMContentLoaded', () => {
+    // Инициализация карт и статистики
     initMaps();
     initializeStats();
     
     // Обработчики для навигационных кнопок
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', () => {
+            // Убираем активный класс со всех кнопок
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            // Добавляем активный класс текущей кнопке
             btn.classList.add('active');
-            switchPage(btn.dataset.tab === 'map' ? 'mapPage' : 
-                      btn.dataset.tab === 'history' ? 'historyPage' : 
-                      btn.dataset.tab === 'profile' ? 'profilePage' : 'dashboard');
+            
+            // Переключаем страницу
+            const tab = btn.dataset.tab;
+            switch(tab) {
+                case 'dashboard':
+                    switchPage('dashboard');
+                    break;
+                case 'map':
+                    switchPage('mapPage');
+                    break;
+                case 'history':
+                    switchPage('historyPage');
+                    break;
+                case 'profile':
+                    switchPage('profilePage');
+                    break;
+            }
         });
     });
     
@@ -281,7 +331,11 @@ document.addEventListener('DOMContentLoaded', () => {
         navigateBtn.addEventListener('click', () => {
             if (parkedLocation) {
                 switchPage('mapPage');
-                map.setView([parkedLocation.lat, parkedLocation.lng], 16);
+                if (map) {
+                    map.setView([parkedLocation.lat, parkedLocation.lng], 16);
+                }
+            } else {
+                tg.showAlert('Локация машины не сохранена');
             }
         });
     }
@@ -291,6 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (backBtn) {
         backBtn.addEventListener('click', () => {
             switchPage('dashboard');
+            // Обновляем активную кнопку в навигации
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.tab === 'dashboard');
             });
