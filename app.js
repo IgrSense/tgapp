@@ -464,29 +464,141 @@ async function navigateToCar() {
 
         // Обновляем обработчик для кнопки навигации
         navButton.addEventListener('click', () => {
-            const userAgent = navigator.userAgent.toLowerCase();
-            const isIOS = /iphone|ipad|ipod/.test(userAgent);
+            // Создаем контейнер для меню выбора навигатора
+            const menuContainer = document.createElement('div');
+            menuContainer.className = 'nav-menu modern';
+            menuContainer.style.cssText = `
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: rgba(30, 30, 30, 0.95);
+                backdrop-filter: blur(10px);
+                padding: 20px;
+                border-radius: 20px 20px 0 0;
+                z-index: 1001;
+                transform: translateY(100%);
+                transition: transform 0.3s ease;
+            `;
 
-            // Создаем URL для iOS
-            const appleUrl = `maps://maps.apple.com/?dirflg=w&saddr=${startPoint[0]},${startPoint[1]}&daddr=${endPoint[0]},${endPoint[1]}`;
-            
-            // Создаем запасной URL для веб-версии Apple Maps
-            const webAppleUrl = `http://maps.apple.com/?dirflg=w&saddr=${startPoint[0]},${startPoint[1]}&daddr=${endPoint[0]},${endPoint[1]}`;
-            
-            // Для Android создаем URL для Google Maps
-            const googleUrl = `https://www.google.com/maps/dir/?api=1&origin=${startPoint[0]},${startPoint[1]}&destination=${endPoint[0]},${endPoint[1]}&travelmode=walking`;
+            // Создаем заголовок
+            const title = document.createElement('div');
+            title.style.cssText = `
+                text-align: center;
+                font-size: 18px;
+                font-weight: 600;
+                margin-bottom: 20px;
+                color: white;
+            `;
+            title.textContent = 'Выберите навигатор';
 
-            // Выбираем URL в зависимости от платформы
-            if (isIOS) {
-                // Сначала пробуем открыть нативное приложение
-                window.location.href = appleUrl;
-                // Если через 2 секунды не открылось, пробуем веб-версию
-                setTimeout(() => {
-                    window.location.href = webAppleUrl;
-                }, 2000);
-            } else {
-                window.location.href = googleUrl;
-            }
+            // Создаем список навигаторов
+            const navigators = [
+                {
+                    name: 'Apple Maps',
+                    icon: '🗺️',
+                    url: `maps://maps.apple.com/?dirflg=w&saddr=${startPoint[0]},${startPoint[1]}&daddr=${endPoint[0]},${endPoint[1]}`,
+                    platform: 'ios'
+                },
+                {
+                    name: 'Яндекс.Карты',
+                    icon: '📍',
+                    url: `yandexmaps://maps.yandex.ru/?rtext=${startPoint[0]},${startPoint[1]}~${endPoint[0]},${endPoint[1]}&rtt=pd`,
+                    webUrl: `https://yandex.ru/maps/?rtext=${startPoint[0]},${startPoint[1]}~${endPoint[0]},${endPoint[1]}&rtt=pd`
+                },
+                {
+                    name: 'Яндекс.Навигатор',
+                    icon: '🚗',
+                    url: `yandexnavi://build_route_on_map?lat_to=${endPoint[0]}&lon_to=${endPoint[1]}&lat_from=${startPoint[0]}&lon_from=${startPoint[1]}`
+                },
+                {
+                    name: '2ГИС',
+                    icon: '🌍',
+                    url: `dgis://2gis.ru/routeSearch/rsType/car/from/${startPoint[1]},${startPoint[0]}/to/${endPoint[1]},${endPoint[0]}`,
+                    webUrl: `https://2gis.ru/routeSearch/rsType/car/from/${startPoint[1]},${startPoint[0]}/to/${endPoint[1]},${endPoint[0]}`
+                }
+            ];
+
+            // Создаем кнопки для каждого навигатора
+            const buttonsList = document.createElement('div');
+            buttonsList.style.cssText = `
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            `;
+
+            navigators.forEach(nav => {
+                const button = document.createElement('button');
+                button.className = 'nav-option modern';
+                button.style.cssText = `
+                    width: 100%;
+                    padding: 16px;
+                    border: none;
+                    background: rgba(255, 255, 255, 0.1);
+                    color: white;
+                    font-size: 16px;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    border-radius: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                `;
+                button.innerHTML = `${nav.icon} ${nav.name}`;
+                
+                button.addEventListener('click', () => {
+                    // Пробуем открыть приложение
+                    window.location.href = nav.url;
+                    
+                    // Если есть веб-версия, открываем её через 2 секунды, если приложение не открылось
+                    if (nav.webUrl) {
+                        setTimeout(() => {
+                            window.location.href = nav.webUrl;
+                        }, 2000);
+                    }
+                    
+                    // Закрываем меню
+                    menuContainer.style.transform = 'translateY(100%)';
+                    setTimeout(() => menuContainer.remove(), 300);
+                });
+
+                buttonsList.appendChild(button);
+            });
+
+            // Добавляем кнопку закрытия
+            const closeButton = document.createElement('button');
+            closeButton.className = 'close-nav-menu modern';
+            closeButton.style.cssText = `
+                width: 100%;
+                padding: 16px;
+                border: none;
+                background: rgba(255, 0, 0, 0.2);
+                color: white;
+                font-size: 16px;
+                font-weight: 500;
+                border-radius: 12px;
+                margin-top: 12px;
+                cursor: pointer;
+            `;
+            closeButton.textContent = 'Закрыть';
+            closeButton.onclick = () => {
+                menuContainer.style.transform = 'translateY(100%)';
+                setTimeout(() => menuContainer.remove(), 300);
+            };
+
+            // Собираем меню
+            menuContainer.appendChild(title);
+            menuContainer.appendChild(buttonsList);
+            menuContainer.appendChild(closeButton);
+
+            // Добавляем меню на страницу
+            document.body.appendChild(menuContainer);
+
+            // Показываем меню с анимацией
+            requestAnimationFrame(() => {
+                menuContainer.style.transform = 'translateY(0)';
+            });
         });
 
         // Удаляем старую кнопку навигации, если она есть
