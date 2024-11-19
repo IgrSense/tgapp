@@ -461,146 +461,45 @@ function toggleParking() {
     }
 }
 
-// Добавляем глобальные переменные для маршрута
+// Добавляем токен Mapbox (можно использовать дефолтный)
+mapboxgl.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
+
+// Объекты карт
+let map = null;
+let miniMap = null;
+let carMarker = null;
+let parkedLocation = null;
 let routeToCarPath = null;
 
-// Обновляем функцию navigateToCar
-async function navigateToCar() {
-    if (!parkedLocation) {
-        tg.showAlert('Локация машины не сохранена');
-        return;
-    }
-
-    // Получаем текущую геопозицию
-    try {
-        const position = await getCurrentPositionPromise();
-        const startPoint = [position.coords.latitude, position.coords.longitude];
-        const endPoint = [parkedLocation.lat, parkedLocation.lng];
-
-        // Переключаемся на страницу карты
-        switchPage('mapPage');
-
-        // Строим маршрут
-        await buildRoute(startPoint, endPoint);
-        
-        // Центрируем карту чтобы был виден весь маршрут
-        if (routeToCarPath) {
-            map.setBounds(routeToCarPath.getBounds(), {
-                checkZoomRange: true,
-                duration: 500
-            });
-        }
-    } catch (error) {
-        tg.showAlert('Ошибка построения маршрута: ' + error.message);
-    }
-}
-
-// Функция для полу��ения геопозиции через Promise
-function getCurrentPositionPromise() {
-    return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-            reject(new Error('Геолокация не поддерживается'));
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 0
-        });
-    });
-}
-
-// Функция построения маршрута
-async function buildRoute(startPoint, endPoint) {
-    if (!ymaps.multiRouter) {
-        tg.showAlert('Ошибка: модуль построения маршрута не загружен');
-        return;
-    }
-
-    // Удаляем предыдущий маршрут если есть
-    if (routeToCarPath) {
-        map.geoObjects.remove(routeToCarPath);
-    }
-
-    return new Promise((resolve, reject) => {
-        // Создаем мультимаршрут
-        const multiRoute = new ymaps.multiRouter.MultiRoute({
-            referencePoints: [startPoint, endPoint],
-            params: {
-                routingMode: 'pedestrian'
-            }
-        }, {
-            boundsAutoApply: true,
-            routeActiveStrokeWidth: 6,
-            routeActiveStrokeColor: "#7B61FF",
-            routeActiveStrokeStyle: 'solid',
-            routeStrokeWidth: 6,
-            routeStrokeColor: "#7B61FF",
-            routeStrokeStyle: 'solid',
-            pinIconFillColor: "#7B61FF",
-            wayPointStartIconFillColor: "#4CAF50",
-            wayPointFinishIconFillColor: "#FF4B4B",
-            wayPointStartIconColor: "#FFFFFF",
-            wayPointFinishIconColor: "#FFFFFF",
-            viaPointIconRadius: 7,
-            viaPointIconFillColor: "#7B61FF",
-            viaPointActiveIconFillColor: "#7B61FF",
-            viaPointIconColor: "#FFFFFF",
-            viaPointDraggable: true,
-            pinVisible: true
-        });
-
-        // Добавляем маршрут на карту
-        map.geoObjects.add(multiRoute);
-        routeToCarPath = multiRoute;
-
-        // Подписываемся на события
-        multiRoute.model.events.add('requestsuccess', () => {
-            const activeRoute = multiRoute.getActiveRoute();
-            if (activeRoute) {
-                const distance = activeRoute.properties.get("distance").text;
-                const duration = activeRoute.properties.get("duration").text;
-                tg.showAlert(`Расстояние до машины: ${distance}\nВремя пешком: ${duration}`);
-            }
-            resolve(multiRoute);
-        });
-
-        multiRoute.model.events.add('requestfail', (error) => {
-            reject(new Error('Не удалось построить маршрут'));
-        });
-    });
-}
-
-// Обновляем инициализацию карт
+// Инициализация карт
 function initMaps() {
     try {
         // Основная карта
-        map = new ymaps.Map('map', {
-            center: [55.7522, 37.6156],
-            zoom: 12,
-            controls: ['zoomControl', 'routeButtonControl']
+        map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/dark-v11',
+            center: [37.6156, 55.7522], // Москва
+            zoom: 12
         });
 
-        // Добавляем элемент управления поиском
-        let searchControl = new ymaps.control.SearchControl({
-            options: {
-                provider: 'yandex#search',
-                size: 'large'
-            }
-        });
-        map.controls.add(searchControl);
+        // Добавляем контролы
+        map.addControl(new mapboxgl.NavigationControl());
+        map.addControl(new mapboxgl.GeolocateControl({
+            positionOptions: {
+                enableHighAccuracy: true
+            },
+            trackUserLocation: true
+        }));
 
         // Мини-карта
-        miniMap = new ymaps.Map('mini-map', {
-            center: [55.7522, 37.6156],
+        miniMap = new mapboxgl.Map({
+            container: 'mini-map',
+            style: 'mapbox://styles/mapbox/dark-v11',
+            center: [37.6156, 55.7522],
             zoom: 12,
-            controls: []
+            interactive: false // Отключаем взаимодействие
         });
 
-        // Отключаем зум на мини-карте
-        miniMap.behaviors.disable(['scrollZoom', 'drag']);
-        
         // Получаем текущую геолокацию
         getCurrentLocation();
         
@@ -610,143 +509,103 @@ function initMaps() {
     }
 }
 
-// Обновляем загрузку API Яндекс.Карт
-ymaps.ready(() => {
-    // Загружаем необходимые модули
-    ymaps.modules.require([
-        'multiRouter.MultiRoute',
-        'control.SearchControl',
-        'control.ZoomControl',
-        'control.RouteButton'
-    ]).then(function() {
-        initMaps();
-        
-        // Обновляем размер карты при переключении на вкладку с картой
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            if (btn.dataset.tab === 'map') {
-                btn.addEventListener('click', () => {
-                    setTimeout(() => {
-                        if (map) {
-                            map.container.fitToViewport();
-                        }
-                    }, 100);
-                });
-            }
-        });
-    }).catch(error => {
-        console.error('Ошибка загрузки модулей Яндекс.Карт:', error);
-        tg.showAlert('Ошибка загрузки карт: ' + error.message);
-    });
-});
-
-// Функция обновления safe areas
-function updateSafeAreas() {
-    const root = document.documentElement;
-    const safeArea = tg.safeAreaInset || { top: 0, bottom: 0, left: 0, right: 0 };
-    const contentSafeArea = tg.contentSafeAreaInset || { top: 0, bottom: 0, left: 0, right: 0 };
-
-    root.style.setProperty('--safe-area-top', `${safeArea.top}px`);
-    root.style.setProperty('--safe-area-bottom', `${safeArea.bottom}px`);
-    root.style.setProperty('--safe-area-left', `${safeArea.left}px`);
-    root.style.setProperty('--safe-area-right', `${safeArea.right}px`);
-    
-    root.style.setProperty('--content-safe-area-top', `${contentSafeArea.top}px`);
-    root.style.setProperty('--content-safe-area-bottom', `${contentSafeArea.bottom}px`);
-    root.style.setProperty('--content-safe-area-left', `${contentSafeArea.left}px`);
-    root.style.setProperty('--content-safe-area-right', `${contentSafeArea.right}px`);
-}
-
-// Добавляем обработчики событий Telegram WebApp
-tg.onEvent('fullscreenChanged', () => {
-    document.body.classList.toggle('fullscreen', tg.isFullscreen);
-    updateSafeAreas();
-});
-
-tg.onEvent('safeAreaChanged', updateSafeAreas);
-tg.onEvent('contentSafeAreaChanged', updateSafeAreas);
-
-// Текущие координаты
-let currentLocation = {
-    lat: null,
-    lng: null
-};
-
-// Объекты карт
-let map = null;
-let miniMap = null;
-let carMarker = null;
-
-// Получение геолокации
-function getCurrentLocation() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            position => {
-                currentLocation.lat = position.coords.latitude;
-                currentLocation.lng = position.coords.longitude;
-                
-                const coords = [currentLocation.lat, currentLocation.lng];
-                
-                // Центрируем карты
-                if (map && miniMap) {
-                    map.setCenter(coords);
-                    miniMap.setCenter(coords);
-                    
-                    // Добавляем маркер
-                    addMarker(coords);
-                }
-            },
-            error => {
-                tg.showAlert('Ошибка получения геолокации: ' + error.message);
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 5000,
-                maximumAge: 0
-            }
-        );
-    } else {
-        tg.showAlert('Геолокация не поддерживается вашим устройством');
-    }
-}
-
-// Добавляем маркер на карты
+// Обновляем функцию добавления маркера
 function addMarker(coords) {
     try {
         // Удаляем старый маркер если есть
         if (carMarker) {
-            map.geoObjects.remove(carMarker);
-            miniMap.geoObjects.remove(carMarker);
+            carMarker.remove();
         }
 
-        // Создаем новый маркер
-        carMarker = new ymaps.Placemark(coords, {
-            balloonContent: 'Ваша машина здесь'
-        }, {
-            preset: 'islands#redAutoIcon'
-        });
+        // Создаем HTML элемент для маркера
+        const el = document.createElement('div');
+        el.className = 'car-marker';
+        el.innerHTML = '🚗';
+        el.style.fontSize = '24px';
 
-        // Добавляем на обе карты
-        map.geoObjects.add(carMarker);
-        miniMap.geoObjects.add(carMarker.clone());
+        // Создаем новый маркер
+        carMarker = new mapboxgl.Marker(el)
+            .setLngLat([coords[1], coords[0]])
+            .setPopup(new mapboxgl.Popup().setHTML('Ваша машина здесь'))
+            .addTo(map);
+
+        // Добавляем маркер на мини-карту
+        new mapboxgl.Marker(el.cloneNode(true))
+            .setLngLat([coords[1], coords[0]])
+            .addTo(miniMap);
+
     } catch (error) {
         console.error('Ошибка добавления маркера:', error);
     }
 }
 
-// Добавляем инициализацию карт при загрузке API
-ymaps.ready(() => {
-    initMaps();
-    
-    // Обновляем размер карты при переключении на вкладку с картой
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        if (btn.dataset.tab === 'map') {
-            btn.addEventListener('click', () => {
-                setTimeout(() => {
-                    if (map) {
-                        map.container.fitToViewport();
-                    }
-                }, 100);
-            });
+// Обновляем функцию построения маршрута
+async function buildRoute(startPoint, endPoint) {
+    try {
+        // Получаем маршрут от API Mapbox
+        const query = await fetch(
+            `https://api.mapbox.com/directions/v5/mapbox/walking/${startPoint[1]},${startPoint[0]};${endPoint[1]},${endPoint[0]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`
+        );
+        const json = await query.json();
+        const data = json.routes[0];
+        const route = data.geometry.coordinates;
+
+        // Удаляем старый маршрут если есть
+        if (map.getSource('route')) {
+            map.removeLayer('route');
+            map.removeSource('route');
         }
-    });
+
+        // Добавляем новый маршрут
+        map.addSource('route', {
+            'type': 'geojson',
+            'data': {
+                'type': 'Feature',
+                'properties': {},
+                'geometry': {
+                    'type': 'LineString',
+                    'coordinates': route
+                }
+            }
+        });
+
+        map.addLayer({
+            'id': 'route',
+            'type': 'line',
+            'source': 'route',
+            'layout': {
+                'line-join': 'round',
+                'line-cap': 'round'
+            },
+            'paint': {
+                'line-color': '#7B61FF',
+                'line-width': 6
+            }
+        });
+
+        // Показываем информацию о маршруте
+        const duration = Math.round(data.duration / 60);
+        const distance = (data.distance / 1000).toFixed(1);
+        tg.showAlert(`Расстояние до машины: ${distance} км\nВремя пешком: ${duration} мин`);
+
+        // Подстраиваем карту под маршрут
+        const coordinates = route;
+        const bounds = coordinates.reduce((bounds, coord) => {
+            return bounds.extend(coord);
+        }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
+
+        map.fitBounds(bounds, {
+            padding: 50
+        });
+
+    } catch (error) {
+        console.error('Ошибка построения маршрута:', error);
+        tg.showAlert('Ошибка построения маршрута: ' + error.message);
+    }
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    initMaps();
+    // ... остальной код ...
 }); 
