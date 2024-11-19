@@ -586,4 +586,118 @@ body.fullscreen {
 
 .header-btn:hover {
     opacity: 1;
+}
+
+/* Добавляем в начало файла новые стили для современного дизайна */
+
+.modern {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+}
+
+.car-card.modern {
+    padding: 16px;
+    margin: 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.car-card.modern .car-image {
+    width: 120px;
+    height: 80px;
+    object-fit: contain;
+    border-radius: 12px;
+}
+
+.car-card.modern .car-info {
+    flex: 1;
+}
+
+.car-card.modern h3 {
+    margin: 0 0 4px 0;
+    font-size: 18px;
+}
+
+.car-card.modern .price {
+    margin: 0;
+    color: #7B61FF;
+    font-weight: 600;
+}
+
+.stats-card.modern {
+    background: #7B61FF;
+    padding: 20px;
+    border-radius: 16px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 16px 0;
+}
+
+.stats-card.modern .stat {
+    text-align: center;
+    color: white;
+}
+
+.stats-card.modern .stat h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.stats-card.modern .stat p {
+    margin: 4px 0 0;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.user-card.modern {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.user-card.modern .user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-card.modern .user-info h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.user-card.modern .user-status {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: #4CAF50;
+}
+
+.bottom-nav {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 24px;
+}
+
+.nav-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.nav-btn.active {
+    background: #7B61FF;
+    transform: translateY(-8px);
 } 

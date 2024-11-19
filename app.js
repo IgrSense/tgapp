@@ -93,6 +93,92 @@ function switchPage(pageId) {
     }
 }
 
+// Добавляем моковые данные
+const mockData = {
+    history: [
+        {
+            date: '2024-03-15',
+            time: '14:30',
+            location: 'Shopping Mall',
+            duration: '2h 15m',
+            cost: '$45.00'
+        },
+        {
+            date: '2024-03-15',
+            time: '10:15',
+            location: 'City Center',
+            duration: '1h 30m',
+            cost: '$32.50'
+        },
+        {
+            date: '2024-03-14',
+            time: '19:45',
+            location: 'Airport',
+            duration: '3h 00m',
+            cost: '$67.00'
+        }
+    ],
+    profile: {
+        name: 'Jane Cooper',
+        avatar: 'https://i.imgur.com/jOjPXr9.jpg',
+        stats: {
+            totalTrips: 42,
+            totalDistance: '1,250 km',
+            totalTime: '83h'
+        }
+    }
+};
+
+// Функция для отображения истории
+function renderHistory() {
+    const historyList = document.getElementById('historyList');
+    if (!historyList) return;
+
+    historyList.innerHTML = mockData.history.map(item => `
+        <div class="history-item modern animate__animated animate__fadeInUp">
+            <div class="history-item-header">
+                <div class="history-date">
+                    <h3>${item.date}</h3>
+                    <p>${item.time}</p>
+                </div>
+                <div class="history-cost">${item.cost}</div>
+            </div>
+            <div class="history-details">
+                <p class="history-location">${item.location}</p>
+                <p class="history-duration">${item.duration}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Функция для отображения профиля
+function renderProfile() {
+    const profileContent = document.querySelector('.profile-content');
+    if (!profileContent) return;
+
+    const profile = mockData.profile;
+    profileContent.innerHTML = `
+        <div class="profile-header modern">
+            <img src="${profile.avatar}" alt="${profile.name}" class="profile-avatar">
+            <h2>${profile.name}</h2>
+        </div>
+        <div class="profile-stats modern">
+            <div class="stat">
+                <h3>${profile.stats.totalTrips}</h3>
+                <p>Total Trips</p>
+            </div>
+            <div class="stat">
+                <h3>${profile.stats.totalDistance}</h3>
+                <p>Distance</p>
+            </div>
+            <div class="stat">
+                <h3>${profile.stats.totalTime}</h3>
+                <p>Drive Time</p>
+            </div>
+        </div>
+    `;
+}
+
 // Обновляем обработчики навигации
 document.addEventListener('DOMContentLoaded', () => {
     // Проверяем наличие элементов перед добавлением обработчиков
@@ -169,6 +255,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    // Добавляем рендеринг истории и профиля при переключении вкладок
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.tab;
+            if (tab === 'history') {
+                renderHistory();
+            } else if (tab === 'profile') {
+                renderProfile();
+            }
+        });
+    });
 });
 
 // Функция обновления safe areas
@@ -195,4 +293,106 @@ tg.onEvent('fullscreenChanged', () => {
 });
 
 tg.onEvent('safeAreaChanged', updateSafeAreas);
-tg.onEvent('contentSafeAreaChanged', updateSafeAreas); 
+tg.onEvent('contentSafeAreaChanged', updateSafeAreas);
+
+// Текущие координаты
+let currentLocation = {
+    lat: null,
+    lng: null
+};
+
+// Объекты карт
+let map = null;
+let miniMap = null;
+let carMarker = null;
+
+// Инициализация карт
+function initMaps() {
+    try {
+        // Основная карта
+        map = new ymaps.Map('map', {
+            center: [55.7522, 37.6156], // Москва
+            zoom: 12,
+            controls: ['zoomControl']
+        });
+
+        // Мини-карта
+        miniMap = new ymaps.Map('mini-map', {
+            center: [55.7522, 37.6156],
+            zoom: 12,
+            controls: []
+        });
+
+        // Отключаем зум на мини-карте
+        miniMap.behaviors.disable(['scrollZoom', 'drag']);
+        
+        // Получаем текущую геолокацию
+        getCurrentLocation();
+        
+    } catch (error) {
+        console.error('Ошибка инициализации карт:', error);
+    }
+}
+
+// Получение геолокации
+function getCurrentLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+            currentLocation.lat = position.coords.latitude;
+            currentLocation.lng = position.coords.longitude;
+            
+            const coords = [currentLocation.lat, currentLocation.lng];
+            
+            // Центрируем карты
+            if (map && miniMap) {
+                map.setCenter(coords);
+                miniMap.setCenter(coords);
+                
+                // Добавляем маркер
+                addMarker(coords);
+            }
+        });
+    }
+}
+
+// Добавляем маркер на карты
+function addMarker(coords) {
+    try {
+        // Удаляем старый маркер если есть
+        if (carMarker) {
+            map.geoObjects.remove(carMarker);
+            miniMap.geoObjects.remove(carMarker);
+        }
+
+        // Создаем новый маркер
+        carMarker = new ymaps.Placemark(coords, {
+            balloonContent: 'Ваша машина здесь'
+        }, {
+            preset: 'islands#redAutoIcon'
+        });
+
+        // Добавляем на обе карты
+        map.geoObjects.add(carMarker);
+        miniMap.geoObjects.add(carMarker.clone());
+    } catch (error) {
+        console.error('Ошибка добавления маркера:', error);
+    }
+}
+
+// Добавляем инициализацию карт при загрузке API
+ymaps.ready(() => {
+    initMaps();
+    
+    // Обновляем размер карты при переключении на вкладку с картой
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        if (btn.dataset.tab === 'map') {
+            btn.addEventListener('click', () => {
+                setTimeout(() => {
+                    if (map) {
+                        map.container.fitToViewport();
+                    }
+                }, 100);
+            });
+        }
+    });
+}); 
