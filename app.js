@@ -224,7 +224,7 @@ function animateNumber(element, value) {
     element.classList.add('pulse');
 }
 
-// Обновляем функцию переключе��ия страниц
+// Обновляем функцию переключеия страниц
 function switchPage(pageId) {
     // Скрываем все страницы
     document.querySelectorAll('.page').forEach(page => {
@@ -462,9 +462,34 @@ async function navigateToCar() {
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         `;
 
-        // Обработчик для кнопки навигации
+        // Обновляем обработчик для кнопки навигации
         navButton.addEventListener('click', () => {
-            window.location.href = universalUrl;
+            const userAgent = navigator.userAgent.toLowerCase();
+            const isIOS = /iphone|ipad|ipod/.test(userAgent);
+            const isAndroid = userAgent.indexOf("android") > -1;
+
+            // Создаем URL для разных платформ
+            const googleUrl = `https://www.google.com/maps/dir/?api=1&origin=${startPoint[0]},${startPoint[1]}&destination=${endPoint[0]},${endPoint[1]}&travelmode=walking`;
+            const appleUrl = `maps://maps.apple.com/?saddr=${startPoint[0]},${startPoint[1]}&daddr=${endPoint[0]},${endPoint[1]}&dirflg=w`;
+            const yandexUrl = `yandexnavi://build_route_on_map?lat_to=${endPoint[0]}&lon_to=${endPoint[1]}`;
+
+            // Выбираем подходящий URL в зависимости от платформы
+            if (isIOS) {
+                // Сначала пробуем Apple Maps, если не сработает - Google Maps
+                window.location.href = appleUrl;
+                setTimeout(() => {
+                    window.location.href = googleUrl;
+                }, 1000);
+            } else if (isAndroid) {
+                // Сначала пробуем Яндекс.Навигатор, если не сработает - Google Maps
+                window.location.href = yandexUrl;
+                setTimeout(() => {
+                    window.location.href = googleUrl;
+                }, 1000);
+            } else {
+                // В остальных случаях открываем Google Maps
+                window.location.href = googleUrl;
+            }
         });
 
         // Удаляем старую кнопку навигации, если она есть
